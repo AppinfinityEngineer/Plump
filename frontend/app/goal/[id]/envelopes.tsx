@@ -82,10 +82,10 @@ export default function Envelopes() {
             {formatGBP(progress.saved)} saved · {formatPercent(progress.percent)} complete
           </AppText>
         </View>
-        {progress.nextSuggestedSlot ? (
+        {typeof progress.nextSuggestedSlot === 'number' ? (
           <Pressable
             testID="next-envelope-shortcut"
-            onPress={() => onTap(progress.nextSuggestedSlot, false)}
+            onPress={() => onTap(progress.nextSuggestedSlot as number, false)}
             style={[styles.nextPill, { backgroundColor: colors.brandPrimary }]}
           >
             <AppText variant="caption" color={colors.onBrandPrimary}>Next</AppText>

@@ -43,15 +43,17 @@ export function Screen({
   style,
   edges = ['top', 'bottom'],
   bg,
+  testID,
 }: {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   edges?: Edge[];
   bg?: string;
+  testID?: string;
 }) {
   const { colors } = useTheme();
   return (
-    <SafeAreaView edges={edges} style={[{ flex: 1, backgroundColor: bg ?? colors.surface }, style]}>
+    <SafeAreaView testID={testID} edges={edges} style={[{ flex: 1, backgroundColor: bg ?? colors.surface }, style]}>
       {children}
     </SafeAreaView>
   );
