@@ -67,13 +67,13 @@ export default function CardReveal() {
 
   return (
     <Screen style={styles.container} testID="card-reveal">
-      <ProgressDots total={7} index={6} />
+      <ProgressDots total={10} index={9} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <AppText variant="title" style={styles.title} color={colors.brandPrimary}>
           Your Plump card is ready.
         </AppText>
         <AppText variant="body" color={colors.muted} style={styles.sub}>
-          Now start filling it.
+          You built the card. Now unlock the saving loop and start filling it.
         </AppText>
 
         <Animated.View style={{ transform: [{ scale }], opacity, marginVertical: spacing.lg }}>

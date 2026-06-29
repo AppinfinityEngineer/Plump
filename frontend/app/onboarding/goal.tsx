@@ -30,7 +30,7 @@ export default function GoalSetup() {
 
   return (
     <Screen style={styles.container} testID="onboarding-goal">
-      <OnboardingHeader step={3} />
+      <OnboardingHeader step={5} total={10} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           style={{ flex: 1 }}
@@ -42,7 +42,7 @@ export default function GoalSetup() {
             Name your goal
           </AppText>
           <AppText variant="body" color={colors.muted} style={styles.sub}>
-            What are you plumping up for?
+            Give your card a goal worth coming back to.
           </AppText>
 
           <AppText variant="caption" style={styles.label}>GOAL NAME</AppText>

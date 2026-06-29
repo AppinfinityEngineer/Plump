@@ -28,12 +28,12 @@ export default function ChallengePicker() {
 
   return (
     <Screen style={styles.container} testID="onboarding-challenge">
-      <OnboardingHeader step={1} />
+      <OnboardingHeader step={2} total={10} />
       <AppText variant="title" style={styles.title}>
         Choose your challenge
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Each one fills your card a different way.
+        Pick the challenge path your card will follow.
       </AppText>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.lg }} showsVerticalScrollIndicator={false}>
@@ -83,7 +83,7 @@ export default function ChallengePicker() {
         label="Continue"
         testID="challenge-continue-button"
         disabled={!selected}
-        onPress={() => router.push('/onboarding/style')}
+        onPress={() => router.push('/onboarding/education' as never)}
       />
     </Screen>
   );

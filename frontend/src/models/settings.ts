@@ -21,4 +21,6 @@ export interface OnboardingDraft {
   targetAmount?: number;
   startDate?: string;
   mascotVariant?: string;
+  savingReason?: string;
+  commitmentLevel?: string;
 }

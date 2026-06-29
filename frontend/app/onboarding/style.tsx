@@ -27,19 +27,19 @@ export default function StylePreview() {
 
   return (
     <Screen style={styles.container} testID="onboarding-style">
-      <OnboardingHeader step={2} />
+      <OnboardingHeader step={4} total={10} />
       <AppText variant="title" style={styles.title}>
         Pick your card style
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        This is the look of your envelopes and share card.
+        This sets the look of your savings path, envelopes, and share card.
       </AppText>
 
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.lg }}>
         {/* envelope grid preview */}
         <View style={[styles.previewCard, { backgroundColor: preview.bg }]}>
           <AppText style={{ fontFamily: fonts.bodySemi, fontSize: fontSize.sm, color: preview.sub, marginBottom: spacing.sm }}>
-            ENVELOPE PREVIEW
+            CARD + PATH PREVIEW
           </AppText>
           <View style={styles.grid}>
             {Array.from({ length: 24 }).map((_, i) => (

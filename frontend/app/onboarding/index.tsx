@@ -18,7 +18,7 @@ export default function OnboardingIntro() {
 
   return (
     <Screen style={styles.container} testID="onboarding-intro">
-      <OnboardingHeader step={0} showBack={false} />
+      <OnboardingHeader step={0} total={10} showBack={false} />
       <View style={styles.body}>
         <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
           Save money.{'\n'}Make it cute.
@@ -27,13 +27,13 @@ export default function OnboardingIntro() {
           <Mascot variant="honey" plumpness={0.45} size={220} />
         </View>
         <AppText variant="body" style={styles.sub} color={colors.muted}>
-          Pick a challenge, design your card, and watch your mascot plump up as you save.
+          Build your savings identity, design your card, then unlock the satisfying daily save loop.
         </AppText>
       </View>
       <Button
-        label="Create my card"
+        label="Start my setup"
         testID="onboarding-start-button"
-        onPress={() => router.push('/onboarding/challenge')}
+        onPress={() => router.push('/onboarding/personality' as never)}
       />
     </Screen>
   );

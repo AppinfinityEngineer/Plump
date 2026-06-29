@@ -26,12 +26,12 @@ export default function MascotPicker() {
 
   return (
     <Screen style={styles.container} testID="onboarding-mascot">
-      <OnboardingHeader step={4} />
+      <OnboardingHeader step={6} total={10} />
       <AppText variant="title" style={styles.title}>
         Meet your Plump
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Pick the little one who grows with your savings.
+        Pick the little one who will show off every save.
       </AppText>
 
       <View style={styles.hero}>
@@ -61,7 +61,7 @@ export default function MascotPicker() {
         })}
       </View>
 
-      <Button label="Continue" testID="mascot-continue-button" onPress={() => router.push('/onboarding/preview')} />
+      <Button label="Preview plumpness" testID="mascot-continue-button" onPress={() => router.push('/onboarding/preview')} />
     </Screen>
   );
 }
