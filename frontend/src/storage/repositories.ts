@@ -117,3 +117,8 @@ export const onboardingDraftRepository = {
     await writeJSON(KEYS.draft, {});
   },
 };
+
+
+export async function clearAllLocalPlumpData(): Promise<void> {
+  await Promise.all(Object.values(KEYS).map((key) => storage.removeItem(key)));
+}

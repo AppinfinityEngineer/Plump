@@ -1,4 +1,5 @@
 import { View, StyleSheet, ScrollView, Switch, Pressable, Linking } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import { Screen, AppText, Card } from '@/src/components/ui';
 import { useApp, useTheme } from '@/src/state/AppProvider';
@@ -19,8 +20,9 @@ function Row({ label, sublabel, right, onPress, testID }: { label: string; subla
 }
 
 export default function Settings() {
+  const router = useRouter();
   const { colors } = useTheme();
-  const { settings, entitlement, updateSettings, restore } = useApp();
+  const { settings, entitlement, updateSettings, restore, resetDemoState } = useApp();
 
   const statusLabel =
     entitlement.status === 'lifetime' ? 'Lifetime · active'
@@ -75,6 +77,20 @@ export default function Settings() {
           <Row label="Privacy policy" testID="settings-privacy" onPress={() => Linking.openURL('https://plump.app/privacy')} />
           <Row label="Terms of use" testID="settings-terms" onPress={() => Linking.openURL('https://plump.app/terms')} />
         </Card>
+
+        {__DEV__ ? (
+          <Card style={{ padding: 0, marginBottom: spacing.lg }}>
+            <Row
+              label="Reset everything / start onboarding"
+              sublabel="Factory reset local test data, card, saves, entitlement and onboarding state."
+              testID="settings-hard-reset-demo"
+              onPress={async () => {
+                await resetDemoState();
+                router.replace('/onboarding' as never);
+              }}
+            />
+          </Card>
+        ) : null}
 
         <AppText variant="caption" style={{ textAlign: 'center', marginTop: spacing.md }}>
           Plump · plump.app{'\n'}A ThoughtSnap Labs product

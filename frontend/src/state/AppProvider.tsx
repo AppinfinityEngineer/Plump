@@ -21,6 +21,7 @@ import {
   settingsRepository,
   entitlementRepository,
   onboardingDraftRepository,
+  clearAllLocalPlumpData,
   reviewPromptRepository,
 } from '@/src/storage/repositories';
 import {
@@ -168,16 +169,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetDemoState = useCallback(async () => {
+    const freshSettings = { ...DEFAULT_SETTINGS, onboardingComplete: false, activeGoalId: undefined };
+    await clearAllLocalPlumpData();
     await Promise.all([
-      settingsRepository.set(DEFAULT_SETTINGS),
+      settingsRepository.set(freshSettings),
       entitlementRepository.set(FREE_ENTITLEMENT),
       goalRepository.replaceAll([]),
-      depositRepository.clear(),
+      depositRepository.replaceAll([]),
       onboardingDraftRepository.clear(),
       reviewPromptRepository.set(INITIAL_REVIEW_STATE),
     ]);
-    setSettings(DEFAULT_SETTINGS);
-    setHapticsEnabled(DEFAULT_SETTINGS.hapticsEnabled);
+    setSettings(freshSettings);
+    setHapticsEnabled(freshSettings.hapticsEnabled);
     setEntitlementState(FREE_ENTITLEMENT);
     setGoals([]);
     setDeposits([]);
