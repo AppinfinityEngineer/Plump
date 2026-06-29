@@ -4,20 +4,37 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Screen, AppText, Badge } from '@/src/components/ui';
-import { Mascot } from '@/src/components/Mascot';
+import { Mascot, type MascotVariant } from '@/src/components/Mascot';
+import { PlumpCard } from '@/src/components/PlumpCard';
 import { useApp, useTheme } from '@/src/state/AppProvider';
-import { radius, spacing, shadow, fontSize, fonts } from '@/src/theme/theme';
+import { radius, spacing, shadow, fontSize, fonts, type CardPaletteId } from '@/src/theme/theme';
 import { haptics } from '@/src/haptics/haptics';
 import { track } from '@/src/services/telemetryService';
 import type { PlumpProductId } from '@/src/services/iapService';
+import { CHALLENGE_TEMPLATES } from '@/src/models/challenge';
 
 type PlanId = PlumpProductId;
 
+const PREMIUM = {
+  blush: '#F8DED2',
+  sage: '#DDECCF',
+  ivory: '#FFF9EF',
+  cocoa: '#5A3F2B',
+  gold: '#DDAA43',
+};
+
 export default function Paywall() {
   const router = useRouter();
-  const { colors, config, purchase, restore } = useApp();
+  const { colors, config, purchase, restore, activeGoal } = useApp();
+  const { colors: themedColors } = useTheme();
   const [selected, setSelected] = useState<PlanId>('plump.annual');
   const [busy, setBusy] = useState<PlanId | 'restore' | null>(null);
+
+  const template = activeGoal ? CHALLENGE_TEMPLATES[activeGoal.challengeType] : CHALLENGE_TEMPLATES.envelope_100;
+  const goalName = activeGoal?.name ?? 'My savings goal';
+  const target = activeGoal?.targetAmount ?? template.totalTarget;
+  const mascotVariant = (activeGoal?.mascotVariant as MascotVariant) ?? 'honey';
+  const palette = (activeGoal?.colorTheme as CardPaletteId) ?? 'cream';
 
   useEffect(() => {
     track('paywall_shown');
@@ -55,18 +72,47 @@ export default function Paywall() {
         <Ionicons name="close" size={26} color={colors.muted} />
       </Pressable>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        <View style={{ alignItems: 'center', marginTop: spacing.sm }}>
-          <Mascot variant="honey" plumpness={0.85} size={120} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <View style={styles.topper}>
+          <Badge label="YOUR CARD IS WAITING" bg={PREMIUM.sage} color={PREMIUM.cocoa} />
+          <Mascot variant={mascotVariant} plumpness={0.82} size={92} smug />
         </View>
+
         <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
-          Start filling your Plump card
+          Start filling {goalName}
         </AppText>
         <AppText variant="body" color={colors.muted} style={styles.sub}>
-          You designed it. Now make it real.
+          You built the card. Plump Pro unlocks the daily loop that turns it from £0 into a finished progress card.
         </AppText>
 
-        {/* Annual hero */}
+        <View style={[styles.previewPanel, { backgroundColor: PREMIUM.ivory, borderColor: PREMIUM.blush }]}>
+          <View style={{ transform: [{ scale: 0.82 }] }}>
+            <PlumpCard
+              goalName={goalName}
+              challengeName={template.shortName}
+              saved={0}
+              target={target}
+              percent={0}
+              mascotVariant={mascotVariant}
+              palette={palette}
+              subline="Locked · ready to fill"
+              width={270}
+            />
+          </View>
+          <View style={styles.previewCopy}>
+            <AppText variant="bodyBold" style={{ color: PREMIUM.cocoa }}>Unlock what you just made</AppText>
+            <AppText variant="caption" style={{ marginTop: 3 }}>
+              Fill saves, watch your mascot grow, and share progress with plump.app on every card.
+            </AppText>
+          </View>
+        </View>
+
+        <View style={styles.benefitStack}>
+          <Benefit icon="checkbox" title="Log every save" body="Envelopes, penny days, weekly saves and no-spend wins all become rows." />
+          <Benefit icon="happy" title="Watch the mascot plump up" body="The mascot is the progress bar — cute enough to keep coming back." />
+          <Benefit icon="share-social" title="Share progress cards" body="Every card is built for screenshots, social proof and motivation." />
+        </View>
+
         <Pressable
           testID="plan-annual"
           onPress={() => setSelected('plump.annual')}
@@ -87,11 +133,10 @@ export default function Paywall() {
             Then {config.prices.annual}
           </AppText>
           <AppText variant="caption" style={{ marginTop: spacing.sm }}>
-            Less than two envelopes to help you finish all 100. ~£2.50/month.
+            Less than two envelopes to help you finish a {template.shortName} card.
           </AppText>
         </Pressable>
 
-        {/* Monthly anchor */}
         <Pressable
           testID="plan-monthly"
           onPress={() => setSelected('plump.monthly')}
@@ -106,7 +151,6 @@ export default function Paywall() {
           </View>
         </Pressable>
 
-        {/* Lifetime alt */}
         <Pressable
           testID="plan-lifetime"
           onPress={() => setSelected('plump.lifetime')}
@@ -122,11 +166,10 @@ export default function Paywall() {
         </Pressable>
 
         <AppText variant="caption" style={styles.paradox} color={colors.brand}>
-          £29.99 to save £5,050 · your savings challenge, made cute enough to actually finish.
+          Built to help you finish {goalName} — not just start another savings idea.
         </AppText>
       </ScrollView>
 
-      {/* Primary CTA reflects the selected plan */}
       <Pressable
         testID="paywall-cta-button"
         onPress={() => onPurchase(selected)}
@@ -137,7 +180,7 @@ export default function Paywall() {
           <ActivityIndicator color={colors.onBrandPrimary} />
         ) : (
           <AppText style={{ fontFamily: fonts.displaySemi, fontSize: fontSize.xl }} color={colors.onBrandPrimary}>
-            {selected === 'plump.annual' ? 'Start 3-day free trial' : selected === 'plump.monthly' ? 'Continue monthly' : 'Unlock lifetime'}
+            {selected === 'plump.annual' ? 'Start filling with 3 days free' : selected === 'plump.monthly' ? 'Continue monthly' : 'Unlock lifetime'}
           </AppText>
         )}
       </Pressable>
@@ -155,11 +198,32 @@ export default function Paywall() {
   );
 }
 
+function Benefit({ icon, title, body }: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }) {
+  return (
+    <View style={styles.benefit}>
+      <View style={[styles.benefitIcon, { backgroundColor: PREMIUM.blush }]}>
+        <Ionicons name={icon} size={15} color={PREMIUM.cocoa} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <AppText variant="bodyBold" style={{ color: PREMIUM.cocoa }}>{title}</AppText>
+        <AppText variant="caption" style={{ marginTop: 2 }}>{body}</AppText>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md },
   close: { position: 'absolute', top: spacing.lg, right: spacing.lg, zIndex: 10, padding: 4 },
+  scroll: { paddingBottom: spacing.xl },
+  topper: { alignItems: 'center', marginTop: spacing.sm, gap: spacing.xs },
   headline: { textAlign: 'center', fontSize: fontSize['2xl'], marginTop: spacing.sm },
-  sub: { textAlign: 'center', marginBottom: spacing.lg },
+  sub: { textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.lg, lineHeight: 22 },
+  previewPanel: { borderRadius: radius.lg, borderWidth: 1.5, padding: spacing.md, marginBottom: spacing.lg, alignItems: 'center', overflow: 'hidden' },
+  previewCopy: { marginTop: -spacing.lg, paddingHorizontal: spacing.md, paddingBottom: spacing.sm, alignItems: 'center' },
+  benefitStack: { gap: spacing.sm, marginBottom: spacing.lg },
+  benefit: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  benefitIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   hero: { borderRadius: radius.lg, padding: spacing.xl, marginBottom: spacing.md },
   plan: { borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center' },
   planRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },

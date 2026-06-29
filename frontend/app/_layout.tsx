@@ -8,6 +8,7 @@ import { useFonts } from 'expo-font';
 
 import { useIconFonts } from '@/src/hooks/use-icon-fonts';
 import { AppProvider } from '@/src/state/AppProvider';
+import { StatusBar } from 'expo-status-bar';
 
 LogBox.ignoreAllLogs(true);
 
@@ -39,7 +40,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FBF4E9' } }}>
+          <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FBF4E9' } }}>
             <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
           </Stack>
         </AppProvider>

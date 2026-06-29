@@ -16,6 +16,7 @@ export default function GoalSetup() {
   const challengeType = (draft.challengeType as ChallengeType) ?? 'envelope_100';
   const template = CHALLENGE_TEMPLATES[challengeType];
 
+  const [userName, setUserName] = useState(draft.userName ?? '');
   const [name, setName] = useState(draft.goalName ?? '');
   const [target, setTarget] = useState(String(draft.targetAmount ?? template.totalTarget));
 
@@ -23,7 +24,11 @@ export default function GoalSetup() {
   const isFixed = template.type === 'envelope_100' || template.type === 'week_52' || template.type === 'penny_365';
 
   const onContinue = () => {
-    void setDraft({ goalName: name.trim() || 'My savings goal', targetAmount: targetNum });
+    void setDraft({
+      userName: userName.trim(),
+      goalName: name.trim() || 'My savings goal',
+      targetAmount: targetNum,
+    });
     track('goal_named', { challenge: challengeType });
     router.push('/onboarding/mascot');
   };
@@ -39,13 +44,24 @@ export default function GoalSetup() {
           contentContainerStyle={{ paddingBottom: spacing.xl }}
         >
           <AppText variant="title" style={styles.title}>
-            Name your goal
+            Make it yours
           </AppText>
           <AppText variant="body" color={colors.muted} style={styles.sub}>
-            Give your card a goal worth coming back to.
+            Your card converts better when it feels personal. Add your name and the thing you are saving for.
           </AppText>
 
-          <AppText variant="caption" style={styles.label}>GOAL NAME</AppText>
+          <AppText variant="caption" style={styles.label}>YOUR NAME</AppText>
+          <TextInput
+            testID="user-name-input"
+            value={userName}
+            onChangeText={setUserName}
+            placeholder="Rich"
+            placeholderTextColor={colors.muted}
+            style={[styles.input, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
+            returnKeyType="next"
+          />
+
+          <AppText variant="caption" style={styles.label}>CARD / GOAL NAME</AppText>
           <TextInput
             testID="goal-name-input"
             value={name}
@@ -83,8 +99,8 @@ export default function GoalSetup() {
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl },
-  title: { marginTop: spacing.lg, fontSize: fontSize['2xl'] },
-  sub: { marginBottom: spacing.xl },
+  title: { marginTop: spacing.lg, fontSize: fontSize['2xl'], textAlign: 'center' },
+  sub: { marginTop: spacing.sm, marginBottom: spacing.xl, textAlign: 'center', lineHeight: 23 },
   label: { marginBottom: spacing.sm, marginTop: spacing.md, letterSpacing: 1 },
   input: { borderRadius: radius.md, borderWidth: 1.5, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontFamily: fonts.body, fontSize: fontSize.lg, minHeight: 56 },
   amountRow: { flexDirection: 'row', alignItems: 'center' },
