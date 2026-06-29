@@ -69,10 +69,15 @@ export function computeProgress(goal: Goal, deposits: Deposit[]): ChallengeProgr
   const percent = target > 0 ? Math.min(1, saved / target) : 0;
 
   const slots = template.slots ?? [];
-  const filledSlots = deposits
-    .map((d) => d.slotNumber)
-    .filter((s): s is number => typeof s === 'number');
-  const remainingSlots = slots.filter((s) => !filledSlots.includes(s));
+  const filledSlots = Array.from(
+    new Set(
+      deposits
+        .map((d) => d.slotNumber)
+        .filter((s): s is number => typeof s === 'number' && Number.isFinite(s)),
+    ),
+  ).sort((a, b) => a - b);
+  const filledSet = new Set(filledSlots);
+  const remainingSlots = slots.filter((s) => !filledSet.has(s));
 
   let nextSuggestedSlot: number | undefined;
   let nextSuggestedAmount: number;
@@ -99,8 +104,11 @@ export function computeProgress(goal: Goal, deposits: Deposit[]): ChallengeProgr
     nextSuggestedSlot,
     nextSuggestedAmount,
     totalSlots: slots.length || (goal.challengeType === 'penny_365' ? 365 : 0),
-    filledCount: filledSlots.length || deposits.length,
-    remainingCount: (slots.length || (goal.challengeType === 'penny_365' ? 365 : 0)) - (filledSlots.length || deposits.length),
+    filledCount: slots.length > 0 ? filledSlots.length : deposits.length,
+    remainingCount: Math.max(
+      0,
+      (slots.length || (goal.challengeType === 'penny_365' ? 365 : 0)) - (slots.length > 0 ? filledSlots.length : deposits.length),
+    ),
     projectedFinish,
     plumpness: percent,
     milestone: highestMilestone(percent),

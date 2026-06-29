@@ -13,18 +13,41 @@ import { spacing, fontSize, radius, fonts } from '@/src/theme/theme';
 import { formatGBP } from '@/src/utils/format';
 import { haptics } from '@/src/haptics/haptics';
 
+function stepLabel(challengeType: string, slot?: number): string {
+  if (!slot) return 'Log a save';
+  if (challengeType === 'envelope_100') return `Envelope ${slot}`;
+  if (challengeType === 'week_52') return `Week ${slot}`;
+  if (challengeType === 'penny_365') return `Day ${slot}`;
+  return 'Log a save';
+}
+
+function duplicateCopy(challengeType: string): string {
+  if (challengeType === 'envelope_100') return 'Envelope already filled';
+  if (challengeType === 'week_52') return 'Week already logged';
+  if (challengeType === 'penny_365') return 'Day already logged';
+  return 'Save already logged';
+}
+
 export default function SaveAction() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { id, slot } = useLocalSearchParams<{ id: string; slot?: string }>();
+  const params = useLocalSearchParams<{ id?: string | string[]; slot?: string | string[] }>();
+  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const rawSlot = Array.isArray(params.slot) ? params.slot[0] : params.slot;
   const { goals, getDeposits, addDeposit } = useApp();
-  const goal = goals.find((g) => g.id === id);
+  const goal = goals.find((g) => g.id === rawId);
 
-  const slotNum = slot ? parseInt(slot, 10) : undefined;
+  const parsedSlot = rawSlot ? parseInt(rawSlot, 10) : undefined;
+  const explicitSlotNum = Number.isFinite(parsedSlot) ? parsedSlot : undefined;
   const deposits = goal ? getDeposits(goal.id) : [];
   const progress = goal ? computeProgress(goal, deposits) : null;
-  const suggested = slotNum && goal
-    ? slotAmount(goal.challengeType, slotNum)
+  const supportsNumberedPath = goal
+    ? goal.challengeType === 'envelope_100' || goal.challengeType === 'week_52' || goal.challengeType === 'penny_365'
+    : false;
+  const effectiveSlotNum = explicitSlotNum ?? (supportsNumberedPath ? progress?.nextSuggestedSlot : undefined);
+  const isSlotAlreadyFilled = effectiveSlotNum !== undefined && (progress?.filledSlots.includes(effectiveSlotNum) ?? false);
+  const suggested = effectiveSlotNum !== undefined && goal
+    ? slotAmount(goal.challengeType, effectiveSlotNum)
     : progress?.nextSuggestedAmount ?? 0;
 
   const [amount, setAmount] = useState(String(suggested));
@@ -32,13 +55,20 @@ export default function SaveAction() {
   const [done, setDone] = useState(false);
   const [milestone, setMilestone] = useState<MilestonePercent | null>(null);
 
-  if (!goal) return null;
+  if (!goal) {
+    return (
+      <Screen style={styles.successWrap} testID="save-goal-not-found">
+        <AppText variant="heading" style={{ textAlign: 'center' }}>Goal not found</AppText>
+        <Button label="Back to goals" variant="secondary" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace('/(tabs)/goals')} />
+      </Screen>
+    );
+  }
   const variant = goal.mascotVariant as MascotVariant;
   const amountNum = parseFloat(amount) || 0;
 
   const onSave = async () => {
-    if (amountNum <= 0) return;
-    const result = await addDeposit(goal.id, amountNum, slotNum, note.trim() || undefined);
+    if (amountNum <= 0 || isSlotAlreadyFilled) return;
+    const result = await addDeposit(goal.id, amountNum, effectiveSlotNum, note.trim() || undefined);
     void haptics.thunk();
     setDone(true);
     if (result.milestone) setMilestone(result.milestone);
@@ -56,7 +86,7 @@ export default function SaveAction() {
         </AppText>
         <AppText variant="body" style={{ textAlign: 'center' }}>Your Plump got rounder.</AppText>
         <AppText variant="number" style={{ marginTop: spacing.md }}>{formatGBP(newProgress.saved)}</AppText>
-        <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}`)} />
+        <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}/envelopes`)} />
 
         <MilestoneModal
           visible={milestone !== null}
@@ -68,7 +98,7 @@ export default function SaveAction() {
           }}
           onKeepSaving={() => {
             setMilestone(null);
-            router.replace(`/goal/${goal.id}`);
+            router.replace(`/goal/${goal.id}/envelopes`);
           }}
         />
       </Screen>
@@ -81,7 +111,7 @@ export default function SaveAction() {
         <Pressable onPress={() => router.back()} testID="save-back-button" hitSlop={12}>
           <Ionicons name="close" size={26} color={colors.onSurface} />
         </Pressable>
-        <AppText variant="heading">{slotNum ? `Envelope ${slotNum}` : 'Log a save'}</AppText>
+        <AppText variant="heading">{stepLabel(goal.challengeType, effectiveSlotNum)}</AppText>
         <View style={{ width: 26 }} />
       </View>
 
@@ -98,17 +128,24 @@ export default function SaveAction() {
             />
           </View>
 
+          {isSlotAlreadyFilled ? (
+            <View style={[styles.warningBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+              <AppText variant="bodyBold" color={colors.brandPrimary}>{duplicateCopy(goal.challengeType)}</AppText>
+              <AppText variant="caption" style={{ marginTop: 2 }}>Pick the next available save to keep the ledger clean.</AppText>
+            </View>
+          ) : null}
+
           <AppText variant="caption" style={styles.label}>NOTE (OPTIONAL)</AppText>
           <TextInput
             testID="save-note-input"
             value={note}
             onChangeText={setNote}
-            placeholder="Skipped coffee + lunch deal"
+            placeholder="Moved it to my savings pot"
             placeholderTextColor={colors.muted}
             style={[styles.noteInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
           />
         </ScrollView>
-        <Button label="Thunk save" testID="thunk-save-button" disabled={amountNum <= 0} onPress={onSave} />
+        <Button label="Thunk save" testID="thunk-save-button" disabled={amountNum <= 0 || isSlotAlreadyFilled} onPress={onSave} />
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -120,5 +157,6 @@ const styles = StyleSheet.create({
   amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1.5, paddingVertical: spacing.xl, marginBottom: spacing.lg },
   label: { marginBottom: spacing.sm, letterSpacing: 1 },
   noteInput: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, fontFamily: fonts.body, fontSize: fontSize.lg, minHeight: 56 },
+  warningBox: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, marginBottom: spacing.lg },
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
 });
