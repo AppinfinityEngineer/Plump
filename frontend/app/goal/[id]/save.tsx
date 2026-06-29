@@ -21,6 +21,36 @@ function stepLabel(challengeType: string, slot?: number): string {
   return 'Log a save';
 }
 
+
+function saveButtonLabel(challengeType: string): string {
+  if (challengeType === 'envelope_100') return 'Fill envelope';
+  if (challengeType === 'week_52') return 'Log this week';
+  if (challengeType === 'penny_365') return "Log today's penny";
+  if (challengeType === 'no_spend') return 'Log no-spend win';
+  return 'Save it';
+}
+
+function notePlaceholder(challengeType: string): string {
+  if (challengeType === 'no_spend') return 'Skipped the takeaway and kept the money';
+  if (challengeType === 'penny_365') return 'Tiny save done';
+  if (challengeType === 'envelope_100') return 'Moved it to my envelope or savings pot';
+  return 'Moved it to my savings pot';
+}
+
+function successTitle(challengeType: string): string {
+  if (challengeType === 'no_spend') return 'Money kept.';
+  if (challengeType === 'penny_365') return 'Tiny win.';
+  if (challengeType === 'envelope_100') return 'Envelope filled.';
+  return 'Save logged.';
+}
+
+function successCopy(challengeType: string): string {
+  if (challengeType === 'no_spend') return 'That no-spend win just plumped your progress.';
+  if (challengeType === 'penny_365') return 'Small save. Rounder Plump.';
+  if (challengeType === 'envelope_100') return 'Your envelope history just got cleaner.';
+  return 'Your Plump got rounder.';
+}
+
 function duplicateCopy(challengeType: string): string {
   if (challengeType === 'envelope_100') return 'Envelope already filled';
   if (challengeType === 'week_52') return 'Week already logged';
@@ -82,9 +112,9 @@ export default function SaveAction() {
         <Confetti play={!milestone} />
         <Mascot variant={variant} plumpness={newProgress.percent} size={220} smug={newProgress.percent >= 1} />
         <AppText variant="title" style={{ textAlign: 'center', marginTop: spacing.lg, fontSize: fontSize['2xl'] }} color={colors.brandPrimary}>
-          Thunk.
+          {successTitle(goal.challengeType)}
         </AppText>
-        <AppText variant="body" style={{ textAlign: 'center' }}>Your Plump got rounder.</AppText>
+        <AppText variant="body" style={{ textAlign: 'center' }}>{successCopy(goal.challengeType)}</AppText>
         <AppText variant="number" style={{ marginTop: spacing.md }}>{formatGBP(newProgress.saved)}</AppText>
         <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}/envelopes`)} />
 
@@ -140,12 +170,14 @@ export default function SaveAction() {
             testID="save-note-input"
             value={note}
             onChangeText={setNote}
-            placeholder="Moved it to my savings pot"
+            placeholder={notePlaceholder(goal.challengeType)}
             placeholderTextColor={colors.muted}
             style={[styles.noteInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
           />
         </ScrollView>
-        <Button label="Thunk save" testID="thunk-save-button" disabled={amountNum <= 0 || isSlotAlreadyFilled} onPress={onSave} />
+        <View style={styles.safeButtonWrap}>
+          <Button label={saveButtonLabel(goal.challengeType)} testID="thunk-save-button" disabled={amountNum <= 0 || isSlotAlreadyFilled} onPress={onSave} />
+        </View>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -153,10 +185,11 @@ export default function SaveAction() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.sm },
-  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, flexGrow: 1 },
-  amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1.5, paddingVertical: spacing.xl, marginBottom: spacing.lg },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xxl, flexGrow: 1 },
+  amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1.5, paddingVertical: spacing.xxl, marginBottom: spacing.xl },
   label: { marginBottom: spacing.sm, letterSpacing: 1 },
-  noteInput: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, fontFamily: fonts.body, fontSize: fontSize.lg, minHeight: 56 },
+  noteInput: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, fontFamily: fonts.body, fontSize: fontSize.lg, minHeight: 60 },
+  safeButtonWrap: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
   warningBox: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, marginBottom: spacing.lg },
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
 });

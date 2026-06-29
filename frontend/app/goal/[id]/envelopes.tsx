@@ -37,6 +37,25 @@ function progressTitle(type: ChallengeType): string {
   return 'SAVINGS PROGRESS';
 }
 
+
+function saveCountLabel(count: number): string {
+  return count === 1 ? '1 save' : `${count} saves`;
+}
+
+function saveLogTitle(type: ChallengeType): string {
+  if (type === 'no_spend') return 'No-spend wins';
+  if (type === 'envelope_100') return 'Envelope history';
+  return 'Progress history';
+}
+
+function saveLogItemTitle(type: ChallengeType, deposit: Deposit): string {
+  const noun = pathNoun(type);
+  if (deposit.slotNumber) return `${noun} ${deposit.slotNumber}`;
+  if (type === 'no_spend') return 'Money kept';
+  if (type === 'penny_365') return 'Penny save';
+  return 'Saved';
+}
+
 function actionLabel(type: ChallengeType): string {
   if (type === 'envelope_100') return 'Fill selected envelope';
   if (type === 'week_52') return 'Log this week';
@@ -55,9 +74,9 @@ function pathExplainer(type: ChallengeType): string {
     return 'Penny 365 is a daily path, not physical envelopes. Each save creates a new row and plumps up your mascot.';
   }
   if (type === 'no_spend') {
-    return 'Log money you avoided spending. Every logged save becomes a row in your progress ledger.';
+    return 'Log money you avoided spending. Each no-spend win becomes part of your progress history.';
   }
-  return 'Every save is logged as a row so your progress is clear.';
+  return 'Every save becomes part of your progress history.';
 }
 
 export default function Envelopes() {
@@ -162,7 +181,7 @@ export default function Envelopes() {
             <RecentSaves
               challengeType={goal.challengeType}
               deposits={deposits}
-              emptyCopy="Filled envelopes will appear here as rows."
+              emptyCopy="Filled envelopes will appear here once you start building your history."
             />
           }
           renderItem={({ item, index }) => (
@@ -267,7 +286,7 @@ function SavingsPathScreen({
       <RecentSaves
         challengeType={challengeType}
         deposits={deposits}
-        emptyCopy={`No saves logged yet. Tap "${actionLabel(challengeType)}" and your first row will appear here.`}
+        emptyCopy={challengeType === 'no_spend' ? 'Money you keep will appear here as your no-spend wins.' : 'Your saves will appear here once you start filling your path.'}
       />
     </ScrollView>
   );
@@ -289,8 +308,8 @@ function RecentSaves({
   return (
     <View style={[styles.logCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
       <View style={styles.logHeader}>
-        <AppText variant="bodyBold">Save log</AppText>
-        <AppText variant="caption">{deposits.length} rows</AppText>
+        <AppText variant="bodyBold">{saveLogTitle(challengeType)}</AppText>
+        <AppText variant="caption">{saveCountLabel(deposits.length)}</AppText>
       </View>
 
       {rows.length === 0 ? (
@@ -309,7 +328,7 @@ function RecentSaves({
             </View>
             <View style={{ flex: 1 }}>
               <AppText variant="bodyBold">
-                {deposit.slotNumber ? `${noun} ${deposit.slotNumber}` : 'Saved'}
+                {saveLogItemTitle(challengeType, deposit)}
               </AppText>
               <AppText variant="caption">
                 {deposit.note?.trim() ? deposit.note : formatDate(deposit.date)}
