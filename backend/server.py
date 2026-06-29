@@ -79,7 +79,7 @@ async def root() -> dict[str, str]:
 
 
 # --- Remote config ------------------------------------------------------------
-@app.get("/v1/config")
+@api_router.get("/v1/config")
 async def config() -> dict[str, Any]:
     return {
         "paywallVariant": "annual_hero_lifetime_alt",
@@ -92,14 +92,14 @@ async def config() -> dict[str, Any]:
 
 
 # --- Telemetry ----------------------------------------------------------------
-@app.post("/v1/events")
+@api_router.post("/v1/events")
 async def events(batch: EventBatch) -> dict[str, Any]:
     await safe_insert("events", {"events": batch.events, "received_at": now_iso()})
     return {"accepted": len(batch.events)}
 
 
 # --- Sync ---------------------------------------------------------------------
-@app.post("/v1/sync")
+@api_router.post("/v1/sync")
 async def sync(payload: SyncPayload) -> dict[str, Any]:
     await safe_insert(
         "sync",
@@ -114,7 +114,7 @@ async def sync(payload: SyncPayload) -> dict[str, Any]:
 
 
 # --- Transaction validation (stub) -------------------------------------------
-@app.post("/v1/validate-transaction")
+@api_router.post("/v1/validate-transaction")
 async def validate_transaction(payload: TransactionPayload) -> dict[str, Any]:
     # V1 stub: device-cached entitlement is the source of truth. A future
     # implementation verifies the JWS / receipt against App Store Server API.
@@ -128,7 +128,7 @@ async def validate_transaction(payload: TransactionPayload) -> dict[str, Any]:
 
 
 # --- App Store Server Notifications (stub) ------------------------------------
-@app.post("/v1/app-store-notifications")
+@api_router.post("/v1/app-store-notifications")
 async def app_store_notifications(request: Request) -> dict[str, Any]:
     try:
         body = await request.json()

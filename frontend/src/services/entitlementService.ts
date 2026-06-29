@@ -37,7 +37,7 @@ export async function validateTransactionRemote(
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3000);
-    await fetch(`${BACKEND}/v1/validate-transaction`, {
+    await fetch(`${BACKEND}/api/v1/validate-transaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ receipt, productId }),

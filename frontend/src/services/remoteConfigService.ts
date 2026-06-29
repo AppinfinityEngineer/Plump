@@ -35,7 +35,7 @@ export async function fetchRemoteConfig(): Promise<RemoteConfig> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3500);
-    const res = await fetch(`${BACKEND}/v1/config`, { signal: ctrl.signal });
+    const res = await fetch(`${BACKEND}/api/v1/config`, { signal: ctrl.signal });
     clearTimeout(t);
     if (!res.ok) return fallbackConfig;
     const data = (await res.json()) as Partial<RemoteConfig>;
