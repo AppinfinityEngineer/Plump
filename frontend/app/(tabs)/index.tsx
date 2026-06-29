@@ -9,6 +9,22 @@ import { computeProgress, getStreak } from '@/src/services/challengeEngine';
 import { formatGBP, formatPercent } from '@/src/utils/format';
 import { spacing, fontSize, fonts, radius } from '@/src/theme/theme';
 
+function pathButtonLabel(challengeType: string): string {
+  if (challengeType === 'envelope_100') return 'View envelopes';
+  if (challengeType === 'week_52') return 'View weeks';
+  if (challengeType === 'penny_365') return 'View penny path';
+  if (challengeType === 'no_spend') return 'View save log';
+  return 'View path';
+}
+
+function nextSaveLabel(challengeType: string, slot?: number): string {
+  if (!slot) return 'Add a save';
+  if (challengeType === 'envelope_100') return `Envelope ${slot}`;
+  if (challengeType === 'week_52') return `Week ${slot}`;
+  if (challengeType === 'penny_365') return `Day ${slot}`;
+  return 'Add a save';
+}
+
 export default function Home() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -61,7 +77,7 @@ export default function Home() {
           <AppText variant="caption">NEXT SUGGESTED SAVE</AppText>
           <View style={styles.nextRow}>
             <AppText variant="heading">
-              {progress.nextSuggestedSlot ? `Envelope ${progress.nextSuggestedSlot}` : 'Add a save'}
+              {nextSaveLabel(activeGoal.challengeType, progress.nextSuggestedSlot)}
             </AppText>
             <AppText style={{ fontFamily: fonts.display, fontSize: fontSize['2xl'] }} color={colors.brandPrimary}>
               {formatGBP(progress.nextSuggestedAmount)}
@@ -72,7 +88,7 @@ export default function Home() {
         <Button label="Save today" testID="home-save-button" onPress={() => router.push(`/goal/${activeGoal.id}/save`)} />
         <View style={{ height: spacing.sm }} />
         <View style={styles.secondaryRow}>
-          <Button label="Envelopes" variant="secondary" style={{ flex: 1 }} testID="home-envelopes-button" onPress={() => router.push(`/goal/${activeGoal.id}/envelopes`)} />
+          <Button label={pathButtonLabel(activeGoal.challengeType)} variant="secondary" style={{ flex: 1 }} testID="home-envelopes-button" onPress={() => router.push(`/goal/${activeGoal.id}/envelopes`)} />
           <Button label="Share card" variant="secondary" style={{ flex: 1 }} testID="home-share-button" onPress={() => router.push(`/goal/${activeGoal.id}/card`)} />
         </View>
         <View style={{ height: spacing.sm }} />

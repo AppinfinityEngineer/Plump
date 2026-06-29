@@ -8,11 +8,25 @@ import { Mascot, type MascotVariant } from '@/src/components/Mascot';
 import { Confetti } from '@/src/components/Confetti';
 import { MilestoneModal } from '@/src/components/MilestoneModal';
 import { useApp, useTheme } from '@/src/state/AppProvider';
-import { CHALLENGE_TEMPLATES } from '@/src/models/challenge';
 import { computeProgress, slotAmount, type MilestonePercent } from '@/src/services/challengeEngine';
 import { spacing, fontSize, radius, fonts } from '@/src/theme/theme';
 import { formatGBP } from '@/src/utils/format';
 import { haptics } from '@/src/haptics/haptics';
+
+function stepLabel(challengeType: string, slot?: number): string {
+  if (!slot) return 'Log a save';
+  if (challengeType === 'envelope_100') return `Envelope ${slot}`;
+  if (challengeType === 'week_52') return `Week ${slot}`;
+  if (challengeType === 'penny_365') return `Day ${slot}`;
+  return 'Log a save';
+}
+
+function duplicateCopy(challengeType: string): string {
+  if (challengeType === 'envelope_100') return 'Envelope already filled';
+  if (challengeType === 'week_52') return 'Week already logged';
+  if (challengeType === 'penny_365') return 'Day already logged';
+  return 'Save already logged';
+}
 
 export default function SaveAction() {
   const router = useRouter();
@@ -27,10 +41,12 @@ export default function SaveAction() {
   const explicitSlotNum = Number.isFinite(parsedSlot) ? parsedSlot : undefined;
   const deposits = goal ? getDeposits(goal.id) : [];
   const progress = goal ? computeProgress(goal, deposits) : null;
-  const templateSlots = goal ? CHALLENGE_TEMPLATES[goal.challengeType].slots ?? [] : [];
-  const effectiveSlotNum = explicitSlotNum ?? (templateSlots.length > 0 ? progress?.nextSuggestedSlot : undefined);
+  const supportsNumberedPath = goal
+    ? goal.challengeType === 'envelope_100' || goal.challengeType === 'week_52' || goal.challengeType === 'penny_365'
+    : false;
+  const effectiveSlotNum = explicitSlotNum ?? (supportsNumberedPath ? progress?.nextSuggestedSlot : undefined);
   const isSlotAlreadyFilled = effectiveSlotNum !== undefined && (progress?.filledSlots.includes(effectiveSlotNum) ?? false);
-  const suggested = effectiveSlotNum && goal
+  const suggested = effectiveSlotNum !== undefined && goal
     ? slotAmount(goal.challengeType, effectiveSlotNum)
     : progress?.nextSuggestedAmount ?? 0;
 
@@ -70,7 +86,7 @@ export default function SaveAction() {
         </AppText>
         <AppText variant="body" style={{ textAlign: 'center' }}>Your Plump got rounder.</AppText>
         <AppText variant="number" style={{ marginTop: spacing.md }}>{formatGBP(newProgress.saved)}</AppText>
-        <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}`)} />
+        <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}/envelopes`)} />
 
         <MilestoneModal
           visible={milestone !== null}
@@ -82,7 +98,7 @@ export default function SaveAction() {
           }}
           onKeepSaving={() => {
             setMilestone(null);
-            router.replace(`/goal/${goal.id}`);
+            router.replace(`/goal/${goal.id}/envelopes`);
           }}
         />
       </Screen>
@@ -95,7 +111,7 @@ export default function SaveAction() {
         <Pressable onPress={() => router.back()} testID="save-back-button" hitSlop={12}>
           <Ionicons name="close" size={26} color={colors.onSurface} />
         </Pressable>
-        <AppText variant="heading">{effectiveSlotNum ? `Envelope ${effectiveSlotNum}` : 'Log a save'}</AppText>
+        <AppText variant="heading">{stepLabel(goal.challengeType, effectiveSlotNum)}</AppText>
         <View style={{ width: 26 }} />
       </View>
 
@@ -114,8 +130,8 @@ export default function SaveAction() {
 
           {isSlotAlreadyFilled ? (
             <View style={[styles.warningBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-              <AppText variant="bodyBold" color={colors.brandPrimary}>Envelope already filled</AppText>
-              <AppText variant="caption" style={{ marginTop: 2 }}>Pick another envelope to keep the ledger clean.</AppText>
+              <AppText variant="bodyBold" color={colors.brandPrimary}>{duplicateCopy(goal.challengeType)}</AppText>
+              <AppText variant="caption" style={{ marginTop: 2 }}>Pick the next available save to keep the ledger clean.</AppText>
             </View>
           ) : null}
 
@@ -124,7 +140,7 @@ export default function SaveAction() {
             testID="save-note-input"
             value={note}
             onChangeText={setNote}
-            placeholder="Skipped coffee + lunch deal"
+            placeholder="Moved it to my savings pot"
             placeholderTextColor={colors.muted}
             style={[styles.noteInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
           />
