@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader } from '@/src/components/ui';
 import { Mascot } from '@/src/components/Mascot';
 import { useTheme } from '@/src/state/AppProvider';
 import { spacing } from '@/src/theme/theme';
@@ -18,7 +18,7 @@ export default function OnboardingIntro() {
 
   return (
     <Screen style={styles.container} testID="onboarding-intro">
-      <ProgressDots total={7} index={0} />
+      <OnboardingHeader step={0} showBack={false} />
       <View style={styles.body}>
         <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
           Save money.{'\n'}Make it cute.

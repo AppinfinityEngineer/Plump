@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader } from '@/src/components/ui';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { CHALLENGE_TEMPLATES, type ChallengeType } from '@/src/models/challenge';
 import { radius, spacing, fonts, fontSize } from '@/src/theme/theme';
@@ -30,7 +30,7 @@ export default function GoalSetup() {
 
   return (
     <Screen style={styles.container} testID="onboarding-goal">
-      <ProgressDots total={7} index={3} />
+      <OnboardingHeader step={3} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           style={{ flex: 1 }}

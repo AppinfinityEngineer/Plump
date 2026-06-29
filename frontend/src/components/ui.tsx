@@ -10,6 +10,8 @@ import {
   type StyleProp,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { fonts, fontSize, radius, spacing, shadow, type ColorScheme } from '@/src/theme/theme';
 import { useTheme } from '@/src/state/AppProvider';
@@ -170,6 +172,37 @@ export function ProgressDots({ total, index }: { total: number; index: number })
           }}
         />
       ))}
+    </View>
+  );
+}
+
+// Onboarding top bar: optional back chevron + centered progress dots.
+export function OnboardingHeader({
+  step,
+  total = 7,
+  showBack = true,
+  onBack,
+}: {
+  step: number;
+  total?: number;
+  showBack?: boolean;
+  onBack?: () => void;
+}) {
+  const { colors } = useTheme();
+  const router = useRouter();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 40, marginBottom: spacing.sm }}>
+      <View style={{ width: 40 }}>
+        {showBack ? (
+          <Pressable testID="onboarding-back-button" onPress={onBack ?? (() => router.back())} hitSlop={12}>
+            <Ionicons name="chevron-back" size={26} color={colors.onSurface} />
+          </Pressable>
+        ) : null}
+      </View>
+      <View style={{ flex: 1 }}>
+        <ProgressDots total={total} index={step} />
+      </View>
+      <View style={{ width: 40 }} />
     </View>
   );
 }

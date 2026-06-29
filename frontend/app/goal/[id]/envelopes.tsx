@@ -2,7 +2,7 @@ import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Screen, AppText } from '@/src/components/ui';
+import { Screen, AppText, Button } from '@/src/components/ui';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { CHALLENGE_TEMPLATES } from '@/src/models/challenge';
 import { computeProgress, slotAmount } from '@/src/services/challengeEngine';
@@ -35,21 +35,29 @@ export default function Envelopes() {
         <Pressable onPress={() => router.back()} testID="envelopes-back-button" hitSlop={12}>
           <Ionicons name="chevron-back" size={26} color={colors.onSurface} />
         </Pressable>
-        <AppText variant="heading">{slots.length} envelopes</AppText>
+        <AppText variant="heading">{slots.length > 0 ? `${slots.length} envelopes` : template.shortName}</AppText>
         <View style={{ width: 26 }} />
       </View>
 
       <View style={styles.summary}>
         <AppText variant="caption">
-          {progress.filledCount} filled · {Math.max(0, slots.length - progress.filledCount)} remaining
+          {slots.length > 0
+            ? `${progress.filledCount} filled · ${Math.max(0, slots.length - progress.filledCount)} remaining`
+            : `${progress.filledCount} saves logged · ${formatGBP(progress.saved)} saved`}
         </AppText>
       </View>
 
       {slots.length === 0 ? (
         <View style={styles.center}>
-          <AppText variant="body" color={colors.muted} style={{ textAlign: 'center' }}>
-            This challenge saves a little each day. Tap Save on your goal to log today's amount.
+          <AppText variant="body" color={colors.muted} style={{ textAlign: 'center', marginBottom: spacing.xl }}>
+            This challenge saves a little each day rather than using envelopes. Log today's save to plump up your mascot.
           </AppText>
+          <Button
+            label="Log a save"
+            testID="envelopes-log-save-button"
+            style={{ alignSelf: 'stretch' }}
+            onPress={() => router.push(`/goal/${goal.id}/save`)}
+          />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>

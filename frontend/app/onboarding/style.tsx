@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader } from '@/src/components/ui';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { CARD_PALETTES, type CardPaletteId, radius, spacing, shadow, fontSize, fonts } from '@/src/theme/theme';
 import { haptics } from '@/src/haptics/haptics';
@@ -27,7 +27,7 @@ export default function StylePreview() {
 
   return (
     <Screen style={styles.container} testID="onboarding-style">
-      <ProgressDots total={7} index={2} />
+      <OnboardingHeader step={2} />
       <AppText variant="title" style={styles.title}>
         Pick your card style
       </AppText>

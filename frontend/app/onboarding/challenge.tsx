@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots, Badge } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader, Badge } from '@/src/components/ui';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { CHALLENGE_ORDER, CHALLENGE_TEMPLATES, type ChallengeType } from '@/src/models/challenge';
 import { radius, spacing, shadow, fontSize, fonts } from '@/src/theme/theme';
@@ -28,7 +28,7 @@ export default function ChallengePicker() {
 
   return (
     <Screen style={styles.container} testID="onboarding-challenge">
-      <ProgressDots total={7} index={1} />
+      <OnboardingHeader step={1} />
       <AppText variant="title" style={styles.title}>
         Choose your challenge
       </AppText>

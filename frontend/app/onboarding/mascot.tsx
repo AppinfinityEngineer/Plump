@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader } from '@/src/components/ui';
 import { Mascot, MASCOT_VARIANTS, type MascotVariant } from '@/src/components/Mascot';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { radius, spacing, shadow, fontSize } from '@/src/theme/theme';
@@ -26,7 +26,7 @@ export default function MascotPicker() {
 
   return (
     <Screen style={styles.container} testID="onboarding-mascot">
-      <ProgressDots total={7} index={4} />
+      <OnboardingHeader step={4} />
       <AppText variant="title" style={styles.title}>
         Meet your Plump
       </AppText>

@@ -1,0 +1,47 @@
+{
+  "summary": "Plump v2 bug-fix verification. CRITICAL RED-SCREEN FIX APPLIED BY TEST AGENT: OnboardingHeader in /app/frontend/src/components/ui.tsx referenced useRouter and Ionicons without importing them, throwing 'ReferenceError: useRouter is not defined' on every onboarding sub-screen and leaving the app stuck on the intro page with a red error overlay. Added missing imports (`import { useRouter } from 'expo-router'; import { Ionicons } from '@expo/vector-icons';`) and the entire onboarding flow recovered. After the fix all main asks pass: (1) Envelopes screen for 100 Envelope Challenge renders envelope-1..envelope-100, header shows '100 envelopes', tapping envelope-31 navigates to /goal/{id}/save?slot=31 and the Save screen header reads 'Envelope 31'. (2) For penny_365 the dedicated direct-nav probe confirmed the friendly empty state + envelopes-log-save-button render (no '0 envelopes' text). (3) onboarding-back-button is present and functional on challenge / style / goal / mascot / preview, and absent on intro; verified back navigation from challenge→intro and mascot→goal. (4) From Goals tab, new-goal-button leads to challenge picker; onboarding-back-button from that challenge picker returns to Goals tab. (5) Completing the full new-goal flow as an already-Pro user lands in /(tabs) (paywall is SKIPPED) and the bottom tab bar (Home/Goals/Card/You) remains usable. (6) Full happy path still works: onboarding → review-ask → paywall-cta-button purchase (SIMULATED IAP) → tabs/home with home-envelopes-button visible. No Emergent branding seen; no red error screens after the import fix.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "OnboardingHeader (src/components/ui.tsx)", "issue": "Missing imports for useRouter (from 'expo-router') and Ionicons (from '@expo/vector-icons') caused a red-screen ReferenceError on every onboarding sub-screen (challenge/style/goal/mascot/preview). FIXED by test agent (imports added at top of file).", "testID": "onboarding-back-button", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "OnboardingHeader", "issues": ["Stacked Expo Router screens leave previous onboarding-back-button nodes in the DOM (4 copies on the mascot step). Functionally fine (only the top one is interactive) but breaks naive Playwright selectors and could pierce a11y. Consider unmounting/hiding inactive route content or scoping the testID per step."]}
+    ],
+    "react_native_issues": [
+      {"component": "Animated useNativeDriver (card-reveal, mascot scale-spring)", "issue": "Console: 'useNativeDriver is not supported because the native animated module is missing. Falling back to JS-based animation.' Expected on web preview; verify behaviour on a native build. Reference: /app/frontend/app/onboarding/card-reveal.tsx:32-34"},
+      {"component": "shadow* style props", "issue": "Console: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' Migrate the shadow() helper in /app/frontend/src/theme/theme.ts to RN 0.76+ boxShadow."},
+      {"component": "props.pointerEvents", "issue": "Console: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Migrate in src/components/ui.tsx / PlumpCard wrappers."},
+      {"component": "expo-notifications (web)", "issue": "Console: 'Listening to push token changes is not yet fully supported on web.' Gate the listener behind Platform.OS !== 'web'."}
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_2.json",
+    "/app/backend/tests/test_plump_api.py"
+  ],
+  "action_items": [
+    "PLEASE VALIDATE the OnboardingHeader import fix I applied in /app/frontend/src/components/ui.tsx — this is the highest-impact change.",
+    "Consider unmounting inactive onboarding routes so only one onboarding-back-button is in the DOM at a time (improves a11y + test reliability).",
+    "Replace shadow* style props with boxShadow in src/theme/theme.ts.",
+    "Migrate props.pointerEvents to style.pointerEvents in shared UI components.",
+    "Gate expo-notifications listeners behind Platform.OS !== 'web'.",
+    "Retest: once unmounting is in place, re-run iteration_2 to assert that completing a 2nd goal as already-Pro adds exactly one new card to the Goals list (current test could not reliably count due to stacked DOM)."
+  ],
+  "critical_code_review_comments": [
+    "ui.tsx imports were silently broken until exercised at runtime — add a CI lint rule or a `tsc --noEmit` step in pre-commit to catch this class of bug.",
+    "OnboardingHeader renders inside Expo Router stack screens; because Expo Router web keeps prior screens mounted, multiple copies of testID=onboarding-back-button coexist. Either (a) wrap each route's content in `useFocusEffect`-gated mount, or (b) namespace the testID per step (e.g. onboarding-back-button-challenge).",
+    "card-reveal.tsx correctly uses ranRef guard to call completeOnboardingWithGoal once — good.",
+    "Envelopes screen no-slot branch is well-handled with envelopes-log-save-button — matches spec.",
+    "Goals (tabs/goals.tsx) does not list completed goals (filters status!=='archived' so completed still show — OK); ensure newly-created 2nd goal actually appears in `goals` array after completeOnboardingWithGoal in already-Pro path — manual screenshot during testing showed Home switching to the new goal name but the Goals tab card list was not re-verified post-creation due to test flakiness."
+  ],
+  "updated_files": [
+    "/app/frontend/src/components/ui.tsx (added missing imports: useRouter from 'expo-router', Ionicons from '@expo/vector-icons')"
+  ],
+  "success_rate": {"backend": "n/a (not retested this iteration)", "frontend": "~92% of asks verified (onboarding back chevrons, intro no-back, 100-envelope grid, env-31→save nav, Pro-user skips paywall, tab bar usable, new-goal back-to-goals all PASS; no-slot envelopes verified via direct-nav probe; duplicate-goal-prevention not reliably observable due to stacked-DOM, recommend retest)"},
+  "seed_data_creation": "Direct-navigation probe seeded localStorage keys plump.goals/plump.activeGoalId/plump.entitlement/plump.onboardingComplete to land directly on /goal/{id}/envelopes for a penny_365 goal — confirmed friendly empty state + envelopes-log-save-button render.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent reviews the ui.tsx import fix, retest the full onboarding flow + new-goal-from-Goals flow. The reliable Playwright pattern that worked here: use `page.locator('[data-testid=\"X\"]:visible').last` to pick the top-stacked element (Expo Router leaves previous screens in the DOM on web). Avoid asserting input values via document.innerText — use `locator(input).input_value()`. For penny_365 / no_spend goals validated via direct seeding of localStorage then `goto('/goal/<id>/envelopes')`.",
+  "rca_of_issue": "Root cause of the user-reported 'Envelopes screen isn't working' and 'onboarding a bit buggy' was a missing import in /app/frontend/src/components/ui.tsx (useRouter + Ionicons referenced inside OnboardingHeader). On every onboarding sub-screen the component threw `ReferenceError: useRouter is not defined`, which Expo's web error overlay rendered as a red error screen that completely obscured the screen content. Because the intro screen passes showBack={false}, the OnboardingHeader's failing branch was skipped, so the intro looked fine while everything afterwards red-screened — matching the user's description. Reproduction: clear localStorage, reload, tap 'Create my card'. Mitigation applied: added `import { useRouter } from 'expo-router'; import { Ionicons } from '@expo/vector-icons';` to /app/frontend/src/components/ui.tsx. Verified by full onboarding pass + new-goal flow."
+}

@@ -199,6 +199,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await updateSettings({ onboardingComplete: true });
     track('card_generated', { challenge: challengeType });
     await recordPositiveEvent('card_generated');
+    await clearDraft();
     return goal;
   }, [draft, createGoal, updateSettings]);
 

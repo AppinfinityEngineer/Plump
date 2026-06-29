@@ -18,12 +18,15 @@ export default function CardReveal() {
   const scale = useRef(new Animated.Value(0.8)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const [showReview, setShowReview] = useState(false);
+  const ranRef = useRef(false);
 
   const challengeType = (draft.challengeType as ChallengeType) ?? 'envelope_100';
   const template = CHALLENGE_TEMPLATES[challengeType];
 
   useEffect(() => {
     (async () => {
+      if (ranRef.current) return;
+      ranRef.current = true;
       await completeOnboardingWithGoal();
       Animated.parallel([
         Animated.spring(scale, { toValue: 1, friction: 6, tension: 60, useNativeDriver: true }),

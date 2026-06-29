@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Screen, AppText, Button, OnboardingHeader } from '@/src/components/ui';
 import { Mascot, type MascotVariant } from '@/src/components/Mascot';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { radius, spacing, fontSize } from '@/src/theme/theme';
@@ -25,7 +25,7 @@ export default function PlumpPreview() {
 
   return (
     <Screen style={styles.container} testID="onboarding-preview">
-      <ProgressDots total={7} index={5} />
+      <OnboardingHeader step={5} />
       <AppText variant="title" style={styles.title}>
         Watch them plump up
       </AppText>
