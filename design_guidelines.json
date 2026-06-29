@@ -1,0 +1,186 @@
+{
+  "app_name": "Plump",
+  "personality": "4 Tactile / Playful structure with 8 Hand-Drawn organic warmth",
+  "personality_one_liner": "A cozy, cheeky, and encouraging savings-challenge app where financial progress feels like nurturing a chubby, happy mascot rather than strict budgeting.",
+  "color": {
+    "surface": "#FBF4E9",
+    "onSurface": "#5A4632",
+    "surfaceSecondary": "#FFFFFF",
+    "onSurfaceSecondary": "#5A4632",
+    "surfaceTertiary": "#F6DCAE",
+    "onSurfaceTertiary": "#5A4632",
+    "surfaceInverse": "#5A4632",
+    "onSurfaceInverse": "#FBF4E9",
+    "brand": "#E8A765",
+    "brandPrimary": "#3F8C32",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#F2A6A0",
+    "onBrandSecondary": "#5A4632",
+    "brandTertiary": "#7FB86A",
+    "onBrandTertiary": "#25451D",
+    "success": "#3F8C32",
+    "onSuccess": "#FFFFFF",
+    "warning": "#E8A765",
+    "onWarning": "#5A4632",
+    "error": "#F2A6A0",
+    "onError": "#5A4632",
+    "info": "#7FB86A",
+    "onInfo": "#25451D",
+    "border": "#E6DACB",
+    "borderStrong": "#5A4632",
+    "divider": "#E6DACB",
+    "dark": {
+      "surface": "#201B16",
+      "onSurface": "#FBF4E9",
+      "surfaceSecondary": "#302820",
+      "onSurfaceSecondary": "#FBF4E9",
+      "surfaceTertiary": "#4B3E34",
+      "onSurfaceTertiary": "#FBF4E9",
+      "surfaceInverse": "#FBF4E9",
+      "onSurfaceInverse": "#201B16",
+      "brand": "#E8A765",
+      "brandPrimary": "#BDE1A7",
+      "onBrandPrimary": "#201B16",
+      "brandSecondary": "#F2A6A0",
+      "onBrandSecondary": "#201B16",
+      "brandTertiary": "#4E9A3D",
+      "onBrandTertiary": "#FBF4E9",
+      "success": "#BDE1A7",
+      "onSuccess": "#201B16",
+      "warning": "#E8A765",
+      "onWarning": "#201B16",
+      "error": "#F2A6A0",
+      "onError": "#201B16",
+      "info": "#4E9A3D",
+      "onInfo": "#FBF4E9",
+      "border": "#4B3E34",
+      "borderStrong": "#FBF4E9",
+      "divider": "#4B3E34"
+    }
+  },
+  "typography": {
+    "displayFontFamily": "Fredoka",
+    "textFontFamily": "Nunito",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24,
+      "3xl": 40
+    }
+  },
+  "spacing": {
+    "rule": "Use generous padding (lg/xl) to make the app feel touchable, tactile and comfortable. Avoid dense grids; let elements breathe like physical paper envelopes on a desk.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 12,
+    "md": 20,
+    "lg": 28,
+    "pill": 999
+  },
+  "shadow_tier": 2,
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": false,
+    "do's": [],
+    "dont's": [
+      "Do not use glass or blur effects. This app relies on a tactile, physical, cozy aesthetic (like paper, envelopes, and stickers) where solid surfaces with soft borders and shadows work best."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Onboarding",
+      "purpose": "A 3-minute interactive flow where users completely design their £0 savings card and mascot BEFORE hitting the paywall.",
+      "states": {
+        "loading": "Centered chubby mascot bouncing gently.",
+        "empty": "N/A",
+        "error": "Soft error toast using rosy cheeks color (#F2A6A0)."
+      },
+      "layout": "Sticky bottom primary CTA ('Continue' / 'Next'). Top area features playful progress dots indicating the step. Central area is fully dedicated to customization (Challenge Picker -> Envelope Style Preview -> Goal Name -> Mascot Customization -> Color Picker -> Final Reveal Animation)."
+    },
+    {
+      "name": "Paywall",
+      "purpose": "Hard paywall presented immediately after the onboarding card reveal.",
+      "states": {
+        "loading": "Spinner overlaid on disabled buttons.",
+        "empty": "N/A",
+        "error": "Error message if purchase fails, with retry button."
+      },
+      "layout": "Hero layout. Annual subscription front-and-center (hero tier) with a 3-day trial highlight. Monthly subscription acts as an anchor below it. Lifetime option at the very bottom. Tone remains cozy and encouraging."
+    },
+    {
+      "name": "Home Dashboard",
+      "purpose": "Central hub showing the user's primary savings goal and the current state of their chubby mascot.",
+      "states": {
+        "loading": "Skeleton of the savings card.",
+        "empty": "Illustration of an empty envelope with a 'Start a challenge' CTA.",
+        "error": "Friendly 'Oops, couldn't load your progress' with retry CTA."
+      },
+      "layout": "The mascot is the core visual hero and acts as the progress bar (starts scrawny at £0, gets rounder and smugger as savings increase). Placed inside a 'savings card' container. Below it, quick actions for deposit and navigating to detailed grids."
+    },
+    {
+      "name": "Goal Detail (100-Envelope Grid)",
+      "purpose": "Detailed view of a specific challenge, e.g., the 100-envelope challenge.",
+      "states": {
+        "loading": "Grid skeleton.",
+        "empty": "N/A (Grid is always generated based on goal).",
+        "error": "Failed to sync envelopes."
+      },
+      "layout": "A scrollable grid of 100 tactile 'envelopes' (cards). Tapping an envelope opens a bottom sheet to confirm a deposit. Saving a deposit triggers a haptic thunk and confetti overlay."
+    },
+    {
+      "name": "Share Card",
+      "purpose": "A shareable, exportable view of the user's customized savings card.",
+      "states": {
+        "loading": "Generating image...",
+        "empty": "N/A",
+        "error": "Failed to generate image."
+      },
+      "layout": "A beautifully rendered view of the user's custom card containing their chosen colors, mascot (current plumpness level), big satisfying numbers showing their progress, and a prominent 'plump.app' watermark. Includes a primary 'Share to IG/TikTok' CTA."
+    }
+  ],
+  "images": {
+    "mascot_placeholder": {
+      "url": "https://images.unsplash.com/photo-1602734846297-9299fc2d4703?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxjdXRlJTIwaG9uZXklMjBiZWFyfGVufDB8fHx8MTc4MjczNTcyMHww&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1602734846297-9299fc2d4703?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxjdXRlJTIwaG9uZXklMjBiZWFyfGVufDB8fHx8MTc4MjczNTcyMHww&ixlib=rb-4.1.0&q=85",
+      "alt": "Placeholder for the custom Plump honey mascot (requires a custom SVG or brand asset in production)."
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Adhere perfectly to the provided color palette. Light mode uses Cream base (#FBF4E9). Dark mode uses Dark base (#201B16). Use the explicit hex codes for savings green, wordmark green, sage progress, and rosy cheeks.",
+    "NO BLUE BUTTONS OR PURPLE GRADIENTS: The prompt explicitly forbids generic AI default colors like indigo, purple, or royal blue. Stick strictly to the warm, earthy, botanical palette provided.",
+    "TYPOGRAPHY: Use 'Fredoka' for headings to give a chubby, rounded, friendly feel. Use 'Nunito' for body copy. Display numbers (savings amounts) should be BIG, satisfying, and prominently use 'brandPrimary' (Savings green in light mode, Sage in dark mode).",
+    "MASCOT PROMINENCE: The mascot is the core brand asset. Never treat it as an afterthought. Give it a massive share of the screen real estate on the Home Dashboard and Share Card.",
+    "TACTILE FEEL: Make buttons and cards feel chunky, touchable, and satisfying. Use shadow_tier 2. Do NOT use glassmorphism, as it contradicts the physical 'cash-stuffing/envelope' aesthetic.",
+    "INTERACTIONS: A 'Save/deposit' action MUST trigger a heavy haptic thunk (`impactAsync(Heavy)`) and a celebration animation (like confetti) to give users a dopamine hit for saving.",
+    "ONBOARDING: Must feature playful progress dots. The entire layout before the paywall should feel highly personalized—letting users pick colors, mascot details, and challenge types.",
+    "SHARE CARD: Must include the 'plump.app' watermark clearly visible. The design must be premium and App Store screenshot-ready."
+  ],
+  "haptics": {
+    "deposit_save": "impactAsync(Heavy)",
+    "envelope_tap": "impactAsync(Light)",
+    "color_picker_select": "selectionAsync()",
+    "primary_cta": "impactAsync(Medium)"
+  }
+}
