@@ -6,6 +6,7 @@ import { Mascot, type MascotVariant } from '@/src/components/Mascot';
 import { useApp, useTheme } from '@/src/state/AppProvider';
 import { CHALLENGE_TEMPLATES } from '@/src/models/challenge';
 import { computeProgress, getStreak } from '@/src/services/challengeEngine';
+import { getLuckySaveSuggestion, routeForLuckySave } from '@/src/services/luckySaveService';
 import { formatGBP, formatPercent } from '@/src/utils/format';
 import { spacing, fontSize, fonts, radius } from '@/src/theme/theme';
 
@@ -47,6 +48,7 @@ export default function Home() {
   const streak = getStreak(deposits);
   const template = CHALLENGE_TEMPLATES[activeGoal.challengeType];
   const variant = activeGoal.mascotVariant as MascotVariant;
+  const luckySave = getLuckySaveSuggestion(activeGoal, progress);
 
   return (
     <Screen edges={['top']} testID="home-dashboard">
@@ -73,19 +75,25 @@ export default function Home() {
           </View>
         </View>
 
-        <Card style={{ marginBottom: spacing.lg }}>
-          <AppText variant="caption">NEXT SUGGESTED SAVE</AppText>
+        <Card style={{ marginBottom: spacing.lg }} testID="home-lucky-save-card">
+          <View style={styles.luckyEyebrowRow}>
+            <AppText variant="caption">{luckySave.eyebrow}</AppText>
+            <AppText variant="caption" color={colors.brandPrimary}>✨ Plump pick</AppText>
+          </View>
           <View style={styles.nextRow}>
             <AppText variant="heading">
-              {nextSaveLabel(activeGoal.challengeType, progress.nextSuggestedSlot)}
+              {luckySave.label}
             </AppText>
             <AppText style={{ fontFamily: fonts.display, fontSize: fontSize['2xl'] }} color={colors.brandPrimary}>
-              {formatGBP(progress.nextSuggestedAmount)}
+              {formatGBP(luckySave.amount)}
             </AppText>
           </View>
+          <AppText variant="caption" style={styles.luckyCopy}>
+            {luckySave.tagline}
+          </AppText>
         </Card>
 
-        <Button label="Save today" testID="home-save-button" onPress={() => router.push(`/goal/${activeGoal.id}/save`)} />
+        <Button label={luckySave.ctaLabel} testID="home-save-button" onPress={() => router.push(routeForLuckySave(activeGoal, luckySave) as never)} />
         <View style={{ height: spacing.sm }} />
         <View style={styles.secondaryRow}>
           <Button label={pathButtonLabel(activeGoal.challengeType)} variant="secondary" style={{ flex: 1 }} testID="home-envelopes-button" onPress={() => router.push(`/goal/${activeGoal.id}/envelopes`)} />
@@ -107,5 +115,14 @@ const styles = StyleSheet.create({
   mascotWrap: { alignItems: 'center', marginVertical: spacing.md },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   nextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
+  luckyEyebrowRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  luckyCopy: {
+    marginTop: spacing.xs,
+    lineHeight: 19,
+  },
   secondaryRow: { flexDirection: 'row', gap: spacing.sm },
 });
