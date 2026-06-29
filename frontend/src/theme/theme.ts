@@ -104,7 +104,7 @@ export const shadow = (scheme: ColorScheme) => ({
 });
 
 // Card visual palettes (the "card style" chosen in onboarding).
-export type CardPaletteId = 'cream' | 'green' | 'pink' | 'honey' | 'dark';
+export type CardPaletteId = 'cream' | 'sage' | 'rosy' | 'cocoa' | 'mint' | 'blueberry' | 'lavender' | 'strawberry' | 'charcoal' | 'golden' | 'green' | 'pink' | 'honey' | 'dark';
 
 export interface CardPalette {
   id: CardPaletteId;
@@ -117,8 +117,19 @@ export interface CardPalette {
 
 export const CARD_PALETTES: Record<CardPaletteId, CardPalette> = {
   cream: { id: 'cream', name: 'Classic cream', bg: '#FBF4E9', accent: '#3F8C32', text: '#5A4632', sub: '#9C8B76' },
-  green: { id: 'green', name: 'Pretty green', bg: '#EAF4E3', accent: '#3F8C32', text: '#2C4A22', sub: '#6E8A5E' },
-  pink: { id: 'pink', name: 'Pink cash-stuffing', bg: '#FBE7E4', accent: '#D86A62', text: '#7A3F3A', sub: '#B98882' },
-  honey: { id: 'honey', name: 'Honey mascot', bg: '#FBE9CF', accent: '#C97E2C', text: '#6B4A22', sub: '#A98552' },
-  dark: { id: 'dark', name: 'Dark cozy', bg: '#2A221B', accent: '#BDE1A7', text: '#FBF4E9', sub: '#B7A78F' },
+  sage: { id: 'sage', name: 'Sage Plump', bg: '#F4FAEE', accent: '#5E9B4C', text: '#33422D', sub: '#7B9072' },
+  rosy: { id: 'rosy', name: 'Rosy Plump', bg: '#FFF2F0', accent: '#DE847D', text: '#5A3D3A', sub: '#A67D78' },
+  cocoa: { id: 'cocoa', name: 'Cocoa Plump', bg: '#F8EFE7', accent: '#8A6446', text: '#4A3425', sub: '#947A66' },
+  mint: { id: 'mint', name: 'Mint Plump', bg: '#F0FBF6', accent: '#4FA77D', text: '#30483E', sub: '#789387' },
+  blueberry: { id: 'blueberry', name: 'Blueberry Plump', bg: '#F3F5FF', accent: '#5F72B8', text: '#343A5B', sub: '#7781A8' },
+  lavender: { id: 'lavender', name: 'Lavender Plump', bg: '#FAF6FF', accent: '#9674C8', text: '#443555', sub: '#8C7CA2' },
+  strawberry: { id: 'strawberry', name: 'Strawberry Plump', bg: '#FFF4F6', accent: '#D75F6C', text: '#59353A', sub: '#A6757B' },
+  charcoal: { id: 'charcoal', name: 'Charcoal Plump', bg: '#F4F1ED', accent: '#4F4A45', text: '#2F2B28', sub: '#7D756E' },
+  golden: { id: 'golden', name: 'Golden Plump', bg: '#FFF8E6', accent: '#D99A29', text: '#5A3F16', sub: '#9B7B45' },
+
+  // Legacy aliases kept so existing local test goals/cards do not crash after the palette upgrade.
+  green: { id: 'green', name: 'Legacy green', bg: '#EAF4E3', accent: '#3F8C32', text: '#2C4A22', sub: '#6E8A5E' },
+  pink: { id: 'pink', name: 'Legacy pink', bg: '#FBE7E4', accent: '#D86A62', text: '#7A3F3A', sub: '#B98882' },
+  honey: { id: 'honey', name: 'Legacy honey', bg: '#FBE9CF', accent: '#C97E2C', text: '#6B4A22', sub: '#A98552' },
+  dark: { id: 'dark', name: 'Legacy dark', bg: '#2A221B', accent: '#BDE1A7', text: '#FBF4E9', sub: '#B7A78F' },
 };

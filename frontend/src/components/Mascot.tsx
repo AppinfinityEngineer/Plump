@@ -5,7 +5,18 @@ import Svg, { Circle, Ellipse, Path, G } from 'react-native-svg';
 import { AppText } from '@/src/components/ui';
 import { haptics } from '@/src/haptics/haptics';
 
-export type MascotVariant = 'honey' | 'sage' | 'rosy' | 'cocoa';
+export type MascotVariant =
+  | 'honey'
+  | 'sage'
+  | 'rosy'
+  | 'cocoa'
+  | 'mint'
+  | 'blueberry'
+  | 'lavender'
+  | 'strawberry'
+  | 'charcoal'
+  | 'golden';
+
 export type MascotMotion = 'none' | 'idle' | 'success';
 
 interface VariantColors {
@@ -19,6 +30,12 @@ export const MASCOT_VARIANTS: Record<MascotVariant, VariantColors & { name: stri
   sage: { name: 'Sage Plump', body: '#7FB86A', dark: '#5E9B4C', belly: '#D9EBC9' },
   rosy: { name: 'Rosy Plump', body: '#F2A6A0', dark: '#DE847D', belly: '#FBDDD9' },
   cocoa: { name: 'Cocoa Plump', body: '#A9805E', dark: '#8A6446', belly: '#E8CDB4' },
+  mint: { name: 'Mint Plump', body: '#76C7A0', dark: '#4FA77D', belly: '#DDF3E9' },
+  blueberry: { name: 'Blueberry Plump', body: '#7E93D9', dark: '#5F72B8', belly: '#DFE6FF' },
+  lavender: { name: 'Lavender Plump', body: '#B99BE6', dark: '#9674C8', belly: '#EFE5FF' },
+  strawberry: { name: 'Strawberry Plump', body: '#F47E8B', dark: '#D75F6C', belly: '#FFE2E6' },
+  charcoal: { name: 'Charcoal Plump', body: '#6F6A63', dark: '#4F4A45', belly: '#D8D1C8' },
+  golden: { name: 'Golden Plump', body: '#F2BE4D', dark: '#D99A29', belly: '#FFE9A8' },
 };
 
 const ROSY = '#F2A6A0';
@@ -32,7 +49,7 @@ const DEFAULT_TAP_PHRASES = [
 
 interface MascotProps {
   variant?: MascotVariant;
-  plumpness?: number; // 0..1
+  plumpness?: number;
   size?: number;
   smug?: boolean;
   motion?: MascotMotion;
@@ -51,7 +68,7 @@ export function Mascot({
   tapPhrases = DEFAULT_TAP_PHRASES,
   testID = 'plump-mascot',
 }: MascotProps) {
-  const c = MASCOT_VARIANTS[variant];
+  const c = MASCOT_VARIANTS[variant] ?? MASCOT_VARIANTS.honey;
   const p = Math.max(0, Math.min(1, plumpness));
   const canInteract = interactive ?? size >= 120;
   const idle = useRef(new Animated.Value(0)).current;
@@ -145,27 +162,19 @@ export function Mascot({
 
   const svg = (
     <Svg width={size} height={height} viewBox="0 0 200 230">
-      {/* ears */}
       <Ellipse cx={cx - 26} cy={hy - 30} rx={18} ry={20} fill={c.body} stroke={c.dark} strokeWidth={2} />
       <Ellipse cx={cx + 26} cy={hy - 30} rx={18} ry={20} fill={c.body} stroke={c.dark} strokeWidth={2} />
       <Ellipse cx={cx - 26} cy={hy - 28} rx={9} ry={11} fill={c.belly} />
       <Ellipse cx={cx + 26} cy={hy - 28} rx={9} ry={11} fill={c.belly} />
-      {/* body */}
       <Ellipse cx={cx} cy={by} rx={bodyRx} ry={bodyRy} fill={c.body} stroke={c.dark} strokeWidth={2.5} />
-      {/* arms */}
       <Ellipse cx={cx - armDx} cy={by} rx={12} ry={18} fill={c.body} stroke={c.dark} strokeWidth={2} />
       <Ellipse cx={cx + armDx} cy={by} rx={12} ry={18} fill={c.body} stroke={c.dark} strokeWidth={2} />
-      {/* feet */}
       <Ellipse cx={cx - 22} cy={footY} rx={16} ry={11} fill={c.body} stroke={c.dark} strokeWidth={2} />
       <Ellipse cx={cx + 22} cy={footY} rx={16} ry={11} fill={c.body} stroke={c.dark} strokeWidth={2} />
-      {/* belly */}
       <Ellipse cx={cx} cy={by + 6} rx={bellyRx} ry={bellyRy} fill={c.belly} />
-      {/* head */}
       <Circle cx={cx} cy={hy} r={headR} fill={c.body} stroke={c.dark} strokeWidth={2.5} />
-      {/* cheeks */}
       <Ellipse cx={cx - 26} cy={cheekY} rx={11} ry={8} fill={ROSY} opacity={0.85} />
       <Ellipse cx={cx + 26} cy={cheekY} rx={11} ry={8} fill={ROSY} opacity={0.85} />
-      {/* eyes */}
       {isSmug ? (
         <G>
           <Path d={`M ${cx - 22} ${eyeY} q 6 -7 12 0`} fill="none" stroke={BROWN} strokeWidth={3} strokeLinecap="round" />
@@ -179,7 +188,6 @@ export function Mascot({
           <Circle cx={cx + 18} cy={eyeY - 2} r={2} fill="#FFFFFF" />
         </G>
       )}
-      {/* mouth */}
       <Path
         d={`M ${cx - 9} ${eyeY + 12} q 4.5 6 9 0 q 4.5 6 9 0`}
         fill="none"

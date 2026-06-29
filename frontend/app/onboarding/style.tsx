@@ -8,7 +8,18 @@ import { CARD_PALETTES, type CardPaletteId, radius, spacing, shadow, fontSize, f
 import { haptics } from '@/src/haptics/haptics';
 import { track } from '@/src/services/telemetryService';
 
-const PALETTE_ORDER: CardPaletteId[] = ['cream', 'green', 'pink', 'honey', 'dark'];
+const PALETTE_ORDER: CardPaletteId[] = [
+  'cream',
+  'sage',
+  'rosy',
+  'cocoa',
+  'mint',
+  'blueberry',
+  'lavender',
+  'strawberry',
+  'charcoal',
+  'golden',
+];
 
 export default function StylePreview() {
   const router = useRouter();
@@ -32,7 +43,7 @@ export default function StylePreview() {
         Pick your card style
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        This sets the look of your savings path, envelopes, and share card.
+        Choose the colour system for your envelopes, progress card, and share card.
       </AppText>
 
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.lg }}>

@@ -43,13 +43,22 @@ export default function CardReveal() {
   const [showReview, setShowReview] = useState(false);
   const ranRef = useRef(false);
 
-  const challengeType = (draft.challengeType as ChallengeType) ?? 'envelope_100';
+  const revealDraftRef = useRef({
+    challengeType: (draft.challengeType as ChallengeType) ?? 'envelope_100',
+    targetAmount: draft.targetAmount,
+    mascotVariant: (draft.mascotVariant as MascotVariant) ?? 'honey',
+    palette: (draft.cardPalette as CardPaletteId) ?? 'cream',
+    goalName: draft.goalName ?? 'My savings goal',
+    firstName: draft.userName?.trim(),
+  });
+
+  const challengeType = revealDraftRef.current.challengeType;
   const template = CHALLENGE_TEMPLATES[challengeType];
-  const target = draft.targetAmount ?? template.totalTarget;
-  const mascotVariant = (draft.mascotVariant as MascotVariant) ?? 'honey';
-  const palette = (draft.cardPalette as CardPaletteId) ?? 'cream';
-  const goalName = draft.goalName ?? 'My savings goal';
-  const firstName = draft.userName?.trim();
+  const target = revealDraftRef.current.targetAmount ?? template.totalTarget;
+  const mascotVariant = revealDraftRef.current.mascotVariant;
+  const palette = revealDraftRef.current.palette;
+  const goalName = revealDraftRef.current.goalName;
+  const firstName = revealDraftRef.current.firstName;
 
   useEffect(() => {
     (async () => {
