@@ -110,7 +110,7 @@ export default function SaveAction() {
     return (
       <Screen style={styles.successWrap} testID="save-success">
         <Confetti play={!milestone} />
-        <Mascot variant={variant} plumpness={newProgress.percent} size={220} smug={newProgress.percent >= 1} />
+        <Mascot variant={variant} plumpness={newProgress.percent} size={220} smug={newProgress.percent >= 1} motion="success" />
         <AppText variant="title" style={{ textAlign: 'center', marginTop: spacing.lg, fontSize: fontSize['2xl'] }} color={colors.brandPrimary}>
           {successTitle(goal.challengeType)}
         </AppText>
@@ -122,6 +122,8 @@ export default function SaveAction() {
           visible={milestone !== null}
           percent={milestone}
           mascotVariant={variant}
+          challengeType={goal.challengeType}
+          goalName={goal.name}
           onShare={() => {
             setMilestone(null);
             router.replace(`/goal/${goal.id}/card`);
