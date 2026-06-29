@@ -21,6 +21,7 @@ import {
   settingsRepository,
   entitlementRepository,
   onboardingDraftRepository,
+  reviewPromptRepository,
 } from '@/src/storage/repositories';
 import {
   fetchRemoteConfig,
@@ -42,6 +43,7 @@ import { setHapticsEnabled } from '@/src/haptics/haptics';
 import { newlyCrossedMilestone, slotAmount, type MilestonePercent } from '@/src/services/challengeEngine';
 import { recordPositiveEvent } from '@/src/review/reviewPromptService';
 import { track } from '@/src/services/telemetryService';
+import { INITIAL_REVIEW_STATE } from '@/src/models/review';
 
 function uid(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -69,6 +71,7 @@ interface AppContextValue {
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   setDraft: (patch: Partial<OnboardingDraft>) => Promise<void>;
   clearDraft: () => Promise<void>;
+  resetDemoState: () => Promise<void>;
   completeOnboardingWithGoal: () => Promise<Goal | undefined>;
 
   purchase: (productId: PlumpProductId) => Promise<PurchaseResult>;
@@ -162,6 +165,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearDraft = useCallback(async () => {
     setDraftState({});
     await onboardingDraftRepository.clear();
+  }, []);
+
+  const resetDemoState = useCallback(async () => {
+    await Promise.all([
+      settingsRepository.set(DEFAULT_SETTINGS),
+      entitlementRepository.set(FREE_ENTITLEMENT),
+      goalRepository.replaceAll([]),
+      depositRepository.clear(),
+      onboardingDraftRepository.clear(),
+      reviewPromptRepository.set(INITIAL_REVIEW_STATE),
+    ]);
+    setSettings(DEFAULT_SETTINGS);
+    setHapticsEnabled(DEFAULT_SETTINGS.hapticsEnabled);
+    setEntitlementState(FREE_ENTITLEMENT);
+    setGoals([]);
+    setDeposits([]);
+    setDraftState({});
   }, []);
 
   const createGoal = useCallback<AppContextValue['createGoal']>(async (input) => {
@@ -312,6 +332,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateSettings,
       setDraft,
       clearDraft,
+      resetDemoState,
       completeOnboardingWithGoal,
       purchase,
       restore,
@@ -323,7 +344,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       ready, colors, isDark, settings, entitlement, isPro, config, products, goals,
-      activeGoal, draft, updateSettings, setDraft, clearDraft, completeOnboardingWithGoal,
+      activeGoal, draft, updateSettings, setDraft, clearDraft, resetDemoState, completeOnboardingWithGoal,
       purchase, restore, createGoal, setActiveGoal, archiveGoal, getDeposits, addDeposit,
     ],
   );

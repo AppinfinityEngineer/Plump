@@ -71,6 +71,12 @@ export const depositRepository = {
     all.push(deposit);
     await writeJSON(KEYS.deposits, all);
   },
+  async replaceAll(deposits: Deposit[]): Promise<void> {
+    await writeJSON(KEYS.deposits, deposits);
+  },
+  async clear(): Promise<void> {
+    await writeJSON(KEYS.deposits, []);
+  },
 };
 
 export const entitlementRepository = {
