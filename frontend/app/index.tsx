@@ -1,30 +1,23 @@
-import { Text, View, StyleSheet, Image } from "react-native";
+import { Redirect } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
 
-const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { useApp } from '@/src/state/AppProvider';
+import { Mascot } from '@/src/components/Mascot';
+import { lightColors } from '@/src/theme/theme';
 
 export default function Index() {
-  console.log(EXPO_PUBLIC_BACKEND_URL, "EXPO_PUBLIC_BACKEND_URL");
+  const { ready, settings, isPro } = useApp();
 
-  return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/app-image.png")}
-        style={styles.image}
-      />
-    </View>
-  );
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: lightColors.surface }}>
+        <Mascot variant="honey" plumpness={0.5} size={140} />
+        <ActivityIndicator color={lightColors.brandPrimary} style={{ marginTop: 16 }} />
+      </View>
+    );
+  }
+
+  if (!settings.onboardingComplete) return <Redirect href="/onboarding" />;
+  if (isPro) return <Redirect href="/(tabs)" />;
+  return <Redirect href="/holding" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0c0c0c",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
-  },
-});

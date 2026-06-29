@@ -1,0 +1,56 @@
+{
+  "summary": "Plump (ThoughtSnap Labs) full E2E review. Backend: 11/13 tests pass on /api/* and local /v1/* routes. The 2 failures expose a CRITICAL routing issue: the public Kubernetes ingress only forwards /api/* to FastAPI, so calls to ${EXPO_PUBLIC_BACKEND_URL}/v1/config, /v1/events, /v1/sync, /v1/validate-transaction, /v1/app-store-notifications return the Expo HTML index instead of JSON. The frontend has a graceful fallbackConfig + try/catch so the user-visible UX is unaffected today, but server-side telemetry, sync, and receipt validation will silently drop. Frontend: All onboarding screens (intro → challenge → style → goal → mascot → preview → card-reveal) navigate correctly, ProgressDots advance 0→6, draft state persists across steps. Review-ask modal appears after card-reveal; both Sure/Not now routes to paywall. Paywall has Annual hero (3 days free / £29.99/year), Monthly (£6.99/month), Lifetime (£49.99 once), visible close, Restore purchases, and legal text. Close → /holding (locked PlumpCard, Unlock Plump + Edit my card buttons). Simulated CTA purchase routes into /(tabs) Home, which shows mascot, £0 saved of £5,050, 0% complete, 0-day streak, Save today + Envelopes + Share card actions and Home/Goals/Card/You tab bar. Envelopes grid renders all 100 envelopes; tapping envelope-1 opens Save with £1 prefilled and Thunk save; tapping confirms shows 'Thunk. Your Plump got rounder.' success with £1 and Done. Settings/You shows 'Plump Pro · Annual trial · active', Restore/Manage subscription, Notifications/Haptics/Dark mode toggles, Export ledger (coming soon), Privacy/Terms, footer 'Plump · plump.app — A ThoughtSnap Labs product'. Dark mode toggle works. No 'Emergent' branding found in user-visible UI. Console warnings (non-blocking): useNativeDriver fallback, deprecated shadow* / pointerEvents props, expo-notifications web limitation. NO red screen, NO page errors.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET/POST /v1/*  (public)",
+        "issue": "Kubernetes ingress only routes /api/* to FastAPI. /v1/config, /v1/events, /v1/sync, /v1/validate-transaction, /v1/app-store-notifications return Content-Type: text/html (Expo bundle) on the public EXPO_PUBLIC_BACKEND_URL. Frontend swallows failures via fallbackConfig + try/catch so UX still works, but telemetry/sync/receipt-validate are silently dropped in preview & production.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Remote config / telemetry / sync / IAP receipt validation",
+        "issue": "Frontend calls ${EXPO_PUBLIC_BACKEND_URL}/v1/... which is unreachable through the preview ingress (text/html returned). All these calls fall back silently. Fix by either: (a) re-mounting the /v1 routes under the /api router prefix in /app/backend/server.py and updating the four service files, or (b) updating ingress to forward /v1 to backend.",
+        "affected_testIDs": []
+      }
+    ],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "Animated (card-reveal, mascot)", "issue": "Console: 'useNativeDriver is not supported because the native animated module is missing. Falling back to JS-based animation.' This is expected on web preview but should be confirmed not present on native build. Reference: /app/frontend/app/onboarding/card-reveal.tsx:29-30"},
+      {"component": "shadow style", "issue": "Console: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' Update src/theme/theme.ts shadow() helper to RN 0.76+ boxShadow API for native builds."},
+      {"component": "props.pointerEvents", "issue": "Console: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Likely inside src/components/ui or PlumpCard; migrate to style.pointerEvents."},
+      {"component": "expo-notifications (web)", "issue": "Console warning at startup: 'Listening to push token changes is not yet fully supported on web.' Guard the notifications listener registration behind Platform.OS !== 'web' to avoid noisy warnings."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_plump_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix /v1 ingress routing: easiest is to move /v1 routes inside the api_router (so they become /api/v1/...) and update remoteConfigService.ts, telemetryService.ts, entitlementService.ts plus any sync caller. Re-test test_v1_config_public and test_v1_events_public after fix.",
+    "Replace deprecated shadow* RN style props with boxShadow in src/theme/theme.ts shadow() helper.",
+    "Replace props.pointerEvents with style.pointerEvents wherever set (search components for pointerEvents= prop).",
+    "Gate expo-notifications token listener and Notifications.* calls behind Platform.OS !== 'web' to suppress repeated startup warnings.",
+    "Optional polish: PlumpCard scale-spring uses useNativeDriver:true; works on native but logs warning on web — acceptable."
+  ],
+  "critical_code_review_comments": [
+    "server.py mounts /v1/* on the root FastAPI app instead of api_router, which is incompatible with the Kubernetes ingress contract documented for this template (only /api/* is forwarded). This is the root cause of the public routing failures.",
+    "server.py uses deprecated FastAPI @app.on_event('shutdown'); migrate to lifespan handlers (minor).",
+    "remoteConfigService.ts treats HTTP 200 with non-JSON body as a failure only via the try/await res.json() catch — works but masks the misroute; consider checking content-type to log a real error in dev.",
+    "/app/backend/.env has DB_NAME='test_database' (template default). Confirm whether the intended Plump DB name should be 'plump' instead before launch."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_plump_api.py (new)"
+  ],
+  "success_rate": {"backend": "85% (11/13)", "frontend": "100% of tested flows"},
+  "seed_data_creation": "None; AsyncStorage/localStorage cleared at start of each Playwright run.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent moves /v1 routes under /api (or fixes ingress), re-run pytest /app/backend/tests/test_plump_api.py — the 2 currently failing tests (TestV1PublicRouting) should turn green. They assert Content-Type application/json on the public URL; if endpoints move to /api/v1/..., update the BASE_URL paths in the test accordingly. Frontend E2E selectors that worked: onboarding-start-button, challenge-envelope_100, challenge-continue-button, style-cream, style-continue-button, goal-name-input, goal-continue-button, mascot-honey, mascot-continue-button, preview-generate-button, card-reveal-start-button, review-notnow-button, paywall-cta-button, paywall-close-button, plan-annual/monthly/lifetime, paywall-restore-button, holding-unlock-button, holding-edit-button, home-save-button, home-envelopes-button, envelope-1..100, thunk-save-button, settings-darkmode/notifications/haptics/restore. The wrapper testIDs on the Screen component (e.g. onboarding-intro, settings-screen) often fail wait_for_selector visibility checks — prefer the inner button testIDs.",
+  "rca_of_issue": "Public /v1/* misroute — Reproduction: curl -i https://plump-dev.preview.emergentagent.com/v1/config returns Content-Type: text/html (the Expo bundle). Locally http://localhost:8001/v1/config returns the expected JSON. Root cause: server.py decorates /v1/* with @app.get/@app.post directly on the FastAPI app instance, but the Kubernetes ingress only routes paths starting with /api to port 8001; everything else goes to the Expo web server on port 3000. Mitigation: move these routes into api_router so the served paths become /api/v1/config, /api/v1/events, /api/v1/sync, /api/v1/validate-transaction, /api/v1/app-store-notifications, and update the four frontend service files to use /api/v1/... ."
+}

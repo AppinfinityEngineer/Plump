@@ -1,0 +1,48 @@
+import { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+
+import { Screen, AppText, Button, ProgressDots } from '@/src/components/ui';
+import { Mascot } from '@/src/components/Mascot';
+import { useTheme } from '@/src/state/AppProvider';
+import { spacing } from '@/src/theme/theme';
+import { track } from '@/src/services/telemetryService';
+
+export default function OnboardingIntro() {
+  const router = useRouter();
+  const { colors } = useTheme();
+
+  useEffect(() => {
+    track('onboarding_start');
+  }, []);
+
+  return (
+    <Screen style={styles.container} testID="onboarding-intro">
+      <ProgressDots total={7} index={0} />
+      <View style={styles.body}>
+        <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
+          Save money.{'\n'}Make it cute.
+        </AppText>
+        <View style={styles.mascot}>
+          <Mascot variant="honey" plumpness={0.45} size={220} />
+        </View>
+        <AppText variant="body" style={styles.sub} color={colors.muted}>
+          Pick a challenge, design your card, and watch your mascot plump up as you save.
+        </AppText>
+      </View>
+      <Button
+        label="Create my card"
+        testID="onboarding-start-button"
+        onPress={() => router.push('/onboarding/challenge')}
+      />
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xl },
+  body: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headline: { textAlign: 'center', lineHeight: 44 },
+  mascot: { marginVertical: spacing.xl },
+  sub: { textAlign: 'center', paddingHorizontal: spacing.lg, lineHeight: 24 },
+});
