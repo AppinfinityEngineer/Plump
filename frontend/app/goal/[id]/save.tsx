@@ -116,7 +116,22 @@ export default function SaveAction() {
         </AppText>
         <AppText variant="body" style={{ textAlign: 'center' }}>{successCopy(goal.challengeType)}</AppText>
         <AppText variant="number" style={{ marginTop: spacing.md }}>{formatGBP(newProgress.saved)}</AppText>
-        <Button label="Done" testID="save-done-button" style={{ marginTop: spacing.xl, alignSelf: 'stretch' }} onPress={() => router.replace(`/goal/${goal.id}/envelopes`)} />
+        <AppText variant="caption" style={{ textAlign: 'center', marginTop: spacing.xs }}>
+          {formatGBP(newProgress.remaining)} left to finish {goal.name}.
+        </AppText>
+        <Button
+          label="View progress"
+          testID="save-done-button"
+          style={{ marginTop: spacing.xl, alignSelf: 'stretch' }}
+          onPress={() => router.replace(`/goal/${goal.id}/envelopes`)}
+        />
+        <Button
+          label="Back to dashboard"
+          variant="secondary"
+          testID="save-home-button"
+          style={{ marginTop: spacing.sm, alignSelf: 'stretch' }}
+          onPress={() => router.replace('/(tabs)')}
+        />
 
         <MilestoneModal
           visible={milestone !== null}
@@ -160,6 +175,10 @@ export default function SaveAction() {
             />
           </View>
 
+          <AppText variant="caption" style={styles.helperCopy}>
+            This should match the money you actually moved into your savings pot, envelope, or account.
+          </AppText>
+
           {isSlotAlreadyFilled ? (
             <View style={[styles.warningBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
               <AppText variant="bodyBold" color={colors.brandPrimary}>{duplicateCopy(goal.challengeType)}</AppText>
@@ -190,6 +209,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xxl, flexGrow: 1 },
   amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1.5, paddingVertical: spacing.xxl, marginBottom: spacing.xl },
   label: { marginBottom: spacing.sm, letterSpacing: 1 },
+  helperCopy: { textAlign: 'center', marginTop: -spacing.md, marginBottom: spacing.xl, lineHeight: 19 },
   noteInput: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, fontFamily: fonts.body, fontSize: fontSize.lg, minHeight: 60 },
   safeButtonWrap: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
   warningBox: { borderRadius: radius.md, borderWidth: 1.5, padding: spacing.lg, marginBottom: spacing.lg },

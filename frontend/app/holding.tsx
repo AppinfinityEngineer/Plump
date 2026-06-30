@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -13,7 +13,8 @@ import { track } from '@/src/services/telemetryService';
 
 export default function Holding() {
   const router = useRouter();
-  const { colors, activeGoal, draft, getDeposits } = useApp();
+  const { colors, activeGoal, draft, getDeposits, restore } = useApp();
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     track('holding_state_shown');
@@ -26,6 +27,14 @@ export default function Holding() {
   const variant = (activeGoal?.mascotVariant as MascotVariant) ?? (draft.mascotVariant as MascotVariant) ?? 'honey';
   const palette = (activeGoal?.colorTheme as CardPaletteId) ?? (draft.cardPalette as CardPaletteId) ?? 'cream';
   const saved = activeGoal ? getDeposits(activeGoal.id).reduce((s, d) => s + d.amount, 0) : 0;
+
+  const onRestore = async () => {
+    if (restoring) return;
+    setRestoring(true);
+    const result = await restore();
+    setRestoring(false);
+    if (result.success) router.replace('/(tabs)');
+  };
 
   return (
     <Screen style={styles.container} testID="holding-state">
@@ -55,8 +64,16 @@ export default function Holding() {
       <Button label="Unlock Plump" testID="holding-unlock-button" onPress={() => router.push('/paywall')} />
       <View style={{ height: spacing.sm }} />
       <Button
-        label="Edit my card"
+        label={restoring ? 'Restoring…' : 'Restore purchases'}
         variant="secondary"
+        loading={restoring}
+        testID="holding-restore-button"
+        onPress={onRestore}
+      />
+      <View style={{ height: spacing.sm }} />
+      <Button
+        label="Edit my card"
+        variant="ghost"
         testID="holding-edit-button"
         onPress={() => router.replace('/onboarding/challenge')}
       />

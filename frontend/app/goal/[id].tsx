@@ -38,7 +38,14 @@ export default function GoalDetail() {
           <Ionicons name="chevron-back" size={26} color={colors.onSurface} />
         </Pressable>
         <AppText variant="heading">{template.shortName}</AppText>
-        <Pressable onPress={() => archiveGoal(goal.id)} testID="goal-archive-button" hitSlop={12}>
+        <Pressable
+          onPress={async () => {
+            await archiveGoal(goal.id);
+            router.replace('/(tabs)/goals');
+          }}
+          testID="goal-archive-button"
+          hitSlop={12}
+        >
           <Ionicons name="archive-outline" size={22} color={colors.muted} />
         </Pressable>
       </View>
@@ -63,7 +70,12 @@ export default function GoalDetail() {
           <Stat label="Projected" value={formatDate(progress.projectedFinish)} />
         </View>
 
-        <Button label="Save" testID="detail-save-button" style={{ marginTop: spacing.lg }} onPress={() => router.push(`/goal/${goal.id}/save`)} />
+        <Button
+          label={deposits.length === 0 ? 'Log your first save' : 'Log another save'}
+          testID="detail-save-button"
+          style={{ marginTop: spacing.lg }}
+          onPress={() => router.push(`/goal/${goal.id}/save`)}
+        />
         <View style={{ height: spacing.sm }} />
         <View style={{ flexDirection: 'row', gap: spacing.sm }}>
           <Button label="Envelopes" variant="secondary" style={{ flex: 1 }} testID="detail-envelopes-button" onPress={() => router.push(`/goal/${goal.id}/envelopes`)} />
@@ -72,7 +84,12 @@ export default function GoalDetail() {
 
         <AppText variant="heading" style={{ marginTop: spacing.xl, marginBottom: spacing.sm }}>Recent saves</AppText>
         {deposits.length === 0 ? (
-          <AppText variant="caption">No saves yet — tap Save to fill your first envelope.</AppText>
+          <View style={[styles.emptyHistory, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+            <AppText variant="bodyBold">No saves logged yet</AppText>
+            <AppText variant="caption" style={{ marginTop: 4 }}>
+              Start with the suggested save and your mascot will begin to plump up.
+            </AppText>
+          </View>
         ) : (
           deposits.slice(0, 12).map((d) => (
             <View key={d.id} style={[styles.depositRow, { borderBottomColor: colors.border }]}>
@@ -105,5 +122,6 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   mascotWrap: { alignItems: 'center', marginVertical: spacing.md },
   statsGrid: { flexDirection: 'row', gap: spacing.sm },
+  emptyHistory: { borderRadius: radius.md, borderWidth: 1, padding: spacing.lg },
   depositRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, borderBottomWidth: 1 },
 });
