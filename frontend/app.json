@@ -10,11 +10,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.thoughtsnaplabs.plump",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.thoughtsnaplabs.plump",
@@ -22,7 +23,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FBF4E9"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",

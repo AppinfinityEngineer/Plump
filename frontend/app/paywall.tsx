@@ -17,9 +17,9 @@ type PlanId = PlumpProductId;
 
 type PaywallMode = 'dev' | 'testflight' | 'review' | 'production';
 
-// Keep this as 'dev' while building so we do not lock ourselves out.
-// Before App Review / production release, switch to 'review' or 'production' so the hard paywall has no visible X.
-const PAYWALL_MODE: PaywallMode = 'dev';
+// Development builds can show a close button so we do not lock ourselves out while testing.
+// EAS preview/production set this to review/production so App Review and TestFlight see the hard paywall.
+const PAYWALL_MODE = ((process.env.EXPO_PUBLIC_PAYWALL_MODE as PaywallMode | undefined) ?? 'dev');
 
 const TERMS_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 const PRIVACY_URL = 'https://docs.google.com/document/d/e/2PACX-1vQzXNr50T8jjdN3oYoszMwBshdex7y3PSh0a3p7tE6zEKG5Jb4k8dEmXLeVYYdr2T3bnqjJJIJQxQ5S/pub';
