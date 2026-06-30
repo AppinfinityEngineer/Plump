@@ -54,7 +54,8 @@
           ]
         }
       ],
-      "react-native-iap"
+      "react-native-iap",
+      "./plugins/with-privacy-manifest"
     ],
     "experiments": {
       "typedRoutes": true
