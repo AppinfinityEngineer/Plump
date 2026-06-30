@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,6 +14,20 @@ import type { PlumpProductId } from '@/src/services/iapService';
 import { CHALLENGE_TEMPLATES } from '@/src/models/challenge';
 
 type PlanId = PlumpProductId;
+
+type PaywallMode = 'dev' | 'testflight' | 'review' | 'production';
+
+// Keep this as 'dev' while building so we do not lock ourselves out.
+// Before App Review / production release, switch to 'review' or 'production' so the hard paywall has no visible X.
+const PAYWALL_MODE: PaywallMode = 'dev';
+
+const TERMS_URL = 'https://plump.app/terms';
+const PRIVACY_URL = 'https://plump.app/privacy';
+
+function shouldShowPaywallClose(mode: PaywallMode): boolean {
+  return mode === 'dev' || mode === 'testflight';
+}
+
 
 const PREMIUM = {
   blush: '#F8DED2',
@@ -35,6 +49,7 @@ export default function Paywall() {
   const target = activeGoal?.targetAmount ?? template.totalTarget;
   const mascotVariant = (activeGoal?.mascotVariant as MascotVariant) ?? 'honey';
   const palette = (activeGoal?.colorTheme as CardPaletteId) ?? 'cream';
+  const showClose = shouldShowPaywallClose(PAYWALL_MODE);
 
   useEffect(() => {
     track('paywall_shown');
@@ -66,23 +81,29 @@ export default function Paywall() {
     router.replace('/holding');
   };
 
+  const openLegalLink = (url: string) => {
+    void Linking.openURL(url);
+  };
+
   return (
     <Screen style={styles.container} testID="paywall">
-      <Pressable onPress={onDismiss} style={styles.close} testID="paywall-close-button" hitSlop={12}>
-        <Ionicons name="close" size={26} color={colors.muted} />
-      </Pressable>
+      {showClose ? (
+        <Pressable onPress={onDismiss} style={styles.close} testID="paywall-close-button" hitSlop={12}>
+          <Ionicons name="close" size={26} color={colors.muted} />
+        </Pressable>
+      ) : null}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <View style={styles.topper}>
-          <Badge label="YOUR CARD IS WAITING" bg={PREMIUM.sage} color={PREMIUM.cocoa} />
+          <Badge label="PAID APP UNLOCK" bg={PREMIUM.sage} color={PREMIUM.cocoa} />
           <Mascot variant={mascotVariant} plumpness={0.82} size={92} smug />
         </View>
 
         <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
-          Start filling {goalName}
+          Unlock Plump
         </AppText>
         <AppText variant="body" color={colors.muted} style={styles.sub}>
-          You built the card. Plump Pro unlocks the daily loop that turns it from £0 into a finished progress card.
+          Plump is a paid savings challenge app. Choose a subscription or lifetime unlock to continue with saving challenges, mascot progress, and share cards.
         </AppText>
 
         <View style={[styles.previewPanel, { backgroundColor: PREMIUM.ivory, borderColor: PREMIUM.blush }]}>
@@ -100,15 +121,15 @@ export default function Paywall() {
             />
           </View>
           <View style={styles.previewCopy}>
-            <AppText variant="bodyBold" style={{ color: PREMIUM.cocoa }}>Unlock what you just made</AppText>
+            <AppText variant="bodyBold" style={{ color: PREMIUM.cocoa }}>Unlock the app you just created</AppText>
             <AppText variant="caption" style={{ marginTop: 3 }}>
-              Fill saves, watch your mascot grow, and share progress with plump.app on every card.
+              Your card is ready. Payment is required to use Plump after onboarding.
             </AppText>
           </View>
         </View>
 
         <View style={styles.benefitStack}>
-          <Benefit icon="checkbox" title="Log every save" body="Envelopes, penny days, weekly saves and no-spend wins all become rows." />
+          <Benefit icon="checkbox" title="Log every save" body="Envelopes, penny days, weekly saves and no-spend wins become your progress history." />
           <Benefit icon="happy" title="Watch the mascot plump up" body="The mascot is the progress bar — cute enough to keep coming back." />
           <Benefit icon="share-social" title="Share progress cards" body="Every card is built for screenshots, social proof and motivation." />
         </View>
@@ -191,9 +212,23 @@ export default function Paywall() {
         </AppText>
       </Pressable>
 
-      <AppText variant="caption" style={styles.legal}>
-        Auto-renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings. Terms · Privacy.
-      </AppText>
+      <View style={styles.legalBox}>
+        <AppText variant="caption" style={styles.legal}>
+          Subscriptions renew automatically unless cancelled at least 24 hours before renewal. Payment is charged to your Apple ID. Manage or cancel anytime in your Apple ID subscriptions.
+        </AppText>
+        <AppText variant="caption" style={styles.legal}>
+          Lifetime unlock is a one-time purchase for this Apple ID.
+        </AppText>
+        <View style={styles.legalLinks}>
+          <Pressable onPress={() => openLegalLink(TERMS_URL)} testID="paywall-terms-link" hitSlop={8}>
+            <AppText variant="caption" color={colors.brandPrimary}>Terms</AppText>
+          </Pressable>
+          <AppText variant="caption" color={colors.muted}>•</AppText>
+          <Pressable onPress={() => openLegalLink(PRIVACY_URL)} testID="paywall-privacy-link" hitSlop={8}>
+            <AppText variant="caption" color={colors.brandPrimary}>Privacy Policy</AppText>
+          </Pressable>
+        </View>
+      </View>
     </Screen>
   );
 }
@@ -230,5 +265,7 @@ const styles = StyleSheet.create({
   paradox: { textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 },
   cta: { height: 58, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm },
   restore: { alignItems: 'center', paddingVertical: spacing.md },
+  legalBox: { gap: spacing.xs, paddingBottom: spacing.xs },
   legal: { textAlign: 'center', fontSize: 11, lineHeight: 16 },
+  legalLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
 });
