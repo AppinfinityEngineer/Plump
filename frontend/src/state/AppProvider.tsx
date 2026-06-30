@@ -45,6 +45,7 @@ import { newlyCrossedMilestone, slotAmount, type MilestonePercent } from '@/src/
 import { recordPositiveEvent } from '@/src/review/reviewPromptService';
 import { track } from '@/src/services/telemetryService';
 import { INITIAL_REVIEW_STATE } from '@/src/models/review';
+import { makeSyncFields, touchSyncFields } from '@/src/models/sync';
 
 function uid(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -202,6 +203,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       status: 'active',
       createdAt: now,
       updatedAt: now,
+      ...makeSyncFields(now),
     };
     await goalRepository.save(goal);
     setGoals((prev) => [...prev, goal]);
@@ -254,7 +256,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const archiveGoal = useCallback(async (id: string) => {
     setGoals((prev) => {
       const next = prev.map((g) =>
-        g.id === id ? { ...g, status: 'archived' as const, updatedAt: new Date().toISOString() } : g,
+        g.id === id ? { ...g, status: 'archived' as const, updatedAt: new Date().toISOString(), ...touchSyncFields(g, new Date().toISOString()) } : g,
       );
       void goalRepository.replaceAll(next);
       return next;
@@ -286,6 +288,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         date: now,
         note,
         createdAt: now,
+        updatedAt: now,
+        ...makeSyncFields(now),
       };
       await depositRepository.add(deposit);
       const firstEver = deposits.filter((d) => d.goalId === goalId).length === 0;
@@ -308,7 +312,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await recordPositiveEvent('goal_completed');
         setGoals((prev) => {
           const next = prev.map((g) =>
-            g.id === goalId ? { ...g, status: 'completed' as const, updatedAt: now } : g,
+            g.id === goalId ? { ...g, status: 'completed' as const, updatedAt: now, ...touchSyncFields(g, now) } : g,
           );
           void goalRepository.replaceAll(next);
           return next;

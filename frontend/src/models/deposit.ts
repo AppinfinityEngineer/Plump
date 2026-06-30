@@ -1,4 +1,6 @@
-export interface Deposit {
+import type { LocalSyncFields } from './sync';
+
+export interface Deposit extends LocalSyncFields {
   id: string;
   goalId: string;
   amount: number;
@@ -6,4 +8,5 @@ export interface Deposit {
   date: string;
   note?: string;
   createdAt: string;
+  updatedAt: string;
 }

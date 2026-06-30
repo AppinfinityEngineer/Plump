@@ -11,6 +11,7 @@ import type { AppSettings, OnboardingDraft } from '@/src/models/settings';
 import { DEFAULT_SETTINGS } from '@/src/models/settings';
 import type { ReviewState } from '@/src/models/review';
 import { INITIAL_REVIEW_STATE } from '@/src/models/review';
+import { normalizeDeposit, normalizeGoal } from '@/src/models/sync';
 
 const KEYS = {
   goals: 'plump.goals',
@@ -37,27 +38,30 @@ async function writeJSON<T>(key: string, value: T): Promise<void> {
 
 export const goalRepository = {
   async list(): Promise<Goal[]> {
-    return readJSON<Goal[]>(KEYS.goals, []);
+    const goals = await readJSON<Goal[]>(KEYS.goals, []);
+    return goals.map(normalizeGoal);
   },
   async get(id: string): Promise<Goal | undefined> {
     const goals = await this.list();
     return goals.find((g) => g.id === id);
   },
   async save(goal: Goal): Promise<void> {
+    const normalized = normalizeGoal(goal);
     const goals = await this.list();
-    const idx = goals.findIndex((g) => g.id === goal.id);
-    if (idx >= 0) goals[idx] = goal;
-    else goals.push(goal);
+    const idx = goals.findIndex((g) => g.id === normalized.id);
+    if (idx >= 0) goals[idx] = normalized;
+    else goals.push(normalized);
     await writeJSON(KEYS.goals, goals);
   },
   async replaceAll(goals: Goal[]): Promise<void> {
-    await writeJSON(KEYS.goals, goals);
+    await writeJSON(KEYS.goals, goals.map(normalizeGoal));
   },
 };
 
 export const depositRepository = {
   async list(): Promise<Deposit[]> {
-    return readJSON<Deposit[]>(KEYS.deposits, []);
+    const deposits = await readJSON<Deposit[]>(KEYS.deposits, []);
+    return deposits.map(normalizeDeposit);
   },
   async listForGoal(goalId: string): Promise<Deposit[]> {
     const all = await this.list();
@@ -67,12 +71,13 @@ export const depositRepository = {
   },
   // Deposits are append-only in V1.
   async add(deposit: Deposit): Promise<void> {
+    const normalized = normalizeDeposit(deposit);
     const all = await this.list();
-    all.push(deposit);
+    all.push(normalized);
     await writeJSON(KEYS.deposits, all);
   },
   async replaceAll(deposits: Deposit[]): Promise<void> {
-    await writeJSON(KEYS.deposits, deposits);
+    await writeJSON(KEYS.deposits, deposits.map(normalizeDeposit));
   },
   async clear(): Promise<void> {
     await writeJSON(KEYS.deposits, []);
