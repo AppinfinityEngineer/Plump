@@ -4,11 +4,14 @@ Render / FastAPI / MongoDB-ready. The mobile app does NOT depend on this being
 live; every endpoint degrades gracefully and never crashes if Mongo is absent.
 """
 
-from fastapi import FastAPI, APIRouter, Request
+from fastapi import FastAPI, APIRouter, Request, Depends, Header, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import hashlib
+import hmac
+import time
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -24,6 +27,8 @@ logger = logging.getLogger("plump")
 # --- Mongo (optional) ---------------------------------------------------------
 mongo_url = os.environ.get("MONGO_URL")
 db_name = os.environ.get("DB_NAME", "plump")
+device_auth_secret = os.environ.get("PLUMP_DEVICE_AUTH_SECRET")
+MAX_SIGNATURE_AGE_SECONDS = 300
 client: Optional[AsyncIOMotorClient] = None
 db = None
 if mongo_url:
@@ -48,6 +53,44 @@ async def safe_insert(collection: str, doc: dict[str, Any]) -> None:
         await db[collection].insert_one(doc)
     except Exception as exc:  # pragma: no cover - defensive
         logger.warning("insert into %s failed: %s", collection, exc)
+
+
+
+# --- Device write auth --------------------------------------------------------
+def compute_device_signature(secret: str, timestamp: str, device_id: str, raw_body: bytes) -> str:
+    message = timestamp.encode("utf-8") + b"." + device_id.encode("utf-8") + b"." + raw_body
+    return hmac.new(secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
+
+
+async def require_signed_device_write(
+    request: Request,
+    x_plump_device_id: Optional[str] = Header(default=None),
+    x_plump_timestamp: Optional[str] = Header(default=None),
+    x_plump_signature: Optional[str] = Header(default=None),
+) -> dict[str, str]:
+    if not device_auth_secret:
+        logger.error("PLUMP_DEVICE_AUTH_SECRET is not configured")
+        raise HTTPException(status_code=503, detail="device auth not configured")
+
+    if not x_plump_device_id or not x_plump_timestamp or not x_plump_signature:
+        raise HTTPException(status_code=401, detail="missing device signature headers")
+
+    try:
+        timestamp_int = int(x_plump_timestamp)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="invalid device timestamp") from None
+
+    now = int(time.time())
+    if abs(now - timestamp_int) > MAX_SIGNATURE_AGE_SECONDS:
+        raise HTTPException(status_code=401, detail="device signature timestamp expired")
+
+    raw_body = await request.body()
+    expected = compute_device_signature(device_auth_secret, x_plump_timestamp, x_plump_device_id, raw_body)
+
+    if not hmac.compare_digest(expected, x_plump_signature):
+        raise HTTPException(status_code=403, detail="invalid device signature")
+
+    return {"device_id": x_plump_device_id, "timestamp": x_plump_timestamp}
 
 
 # --- Models -------------------------------------------------------------------
@@ -93,14 +136,14 @@ async def config() -> dict[str, Any]:
 
 # --- Telemetry ----------------------------------------------------------------
 @api_router.post("/v1/events")
-async def events(batch: EventBatch) -> dict[str, Any]:
+async def events(batch: EventBatch, _auth: dict[str, str] = Depends(require_signed_device_write)) -> dict[str, Any]:
     await safe_insert("events", {"events": batch.events, "received_at": now_iso()})
     return {"accepted": len(batch.events)}
 
 
 # --- Sync ---------------------------------------------------------------------
 @api_router.post("/v1/sync")
-async def sync(payload: SyncPayload) -> dict[str, Any]:
+async def sync(payload: SyncPayload, _auth: dict[str, str] = Depends(require_signed_device_write)) -> dict[str, Any]:
     await safe_insert(
         "sync",
         {
