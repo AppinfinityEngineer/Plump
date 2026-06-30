@@ -55,6 +55,15 @@ async def safe_insert(collection: str, doc: dict[str, Any]) -> None:
         logger.warning("insert into %s failed: %s", collection, exc)
 
 
+async def safe_replace(collection: str, filter_doc: dict[str, Any], doc: dict[str, Any]) -> None:
+    if db is None:
+        return
+    try:
+        await db[collection].replace_one(filter_doc, doc, upsert=True)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("replace into %s failed: %s", collection, exc)
+
+
 
 # --- Device write auth --------------------------------------------------------
 def compute_device_signature(secret: str, timestamp: str, device_id: str, raw_body: bytes) -> str:
@@ -144,15 +153,48 @@ async def events(batch: EventBatch, _auth: dict[str, str] = Depends(require_sign
 # --- Sync ---------------------------------------------------------------------
 @api_router.post("/v1/sync")
 async def sync(payload: SyncPayload, _auth: dict[str, str] = Depends(require_signed_device_write)) -> dict[str, Any]:
+    received_at = now_iso()
+    payload_doc = payload.model_dump()
+    reason = payload_doc.get("reason")
+
     await safe_insert(
         "sync",
         {
-            "device_id": payload.device_id,
-            "goals": payload.goals,
-            "deposits": payload.deposits,
-            "received_at": now_iso(),
+            **payload_doc,
+            "received_at": received_at,
         },
     )
+
+    for goal in payload.goals:
+        goal_id = goal.get("id")
+        if goal_id:
+            await safe_replace(
+                "goal_mirrors",
+                {"device_id": payload.device_id, "goal_id": goal_id},
+                {
+                    "device_id": payload.device_id,
+                    "goal_id": goal_id,
+                    "goal": goal,
+                    "reason": reason,
+                    "received_at": received_at,
+                },
+            )
+
+    for deposit in payload.deposits:
+        deposit_id = deposit.get("id")
+        if deposit_id:
+            await safe_replace(
+                "deposit_mirrors",
+                {"device_id": payload.device_id, "deposit_id": deposit_id},
+                {
+                    "device_id": payload.device_id,
+                    "deposit_id": deposit_id,
+                    "deposit": deposit,
+                    "reason": reason,
+                    "received_at": received_at,
+                },
+            )
+
     return {"status": "ok", "goals": len(payload.goals), "deposits": len(payload.deposits)}
 
 

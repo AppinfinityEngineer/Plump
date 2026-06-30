@@ -1,6 +1,6 @@
 // Fire-and-forget telemetry. Batches locally; posts when possible. Never throws.
 
-const BACKEND = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { backendMirrorConfigured, signedBackendPost } from './backendClient';
 
 export type TelemetryEvent =
   | 'app_open'
@@ -51,20 +51,13 @@ export function track(
 }
 
 async function flush(): Promise<void> {
-  if (flushing || queue.length === 0 || !BACKEND) return;
+  if (flushing || queue.length === 0 || !backendMirrorConfigured()) return;
   flushing = true;
   const batch = queue;
   queue = [];
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3000);
-    await fetch(`${BACKEND}/api/v1/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ events: batch }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(t);
+    const ok = await signedBackendPost('/api/v1/events', { events: batch });
+    if (!ok) throw new Error('telemetry mirror failed');
   } catch {
     // put them back; app keeps working regardless
     queue = [...batch, ...queue];

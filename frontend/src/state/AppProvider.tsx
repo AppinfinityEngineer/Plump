@@ -45,6 +45,7 @@ import { newlyCrossedMilestone, slotAmount, type MilestonePercent } from '@/src/
 import { recordPositiveEvent } from '@/src/review/reviewPromptService';
 import { track } from '@/src/services/telemetryService';
 import { INITIAL_REVIEW_STATE } from '@/src/models/review';
+import { mirrorLocalState } from '@/src/services/syncMirrorService';
 import { makeSyncFields, touchSyncFields } from '@/src/models/sync';
 
 function uid(): string {
@@ -126,6 +127,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setGoals(g);
       setDeposits(d);
       setDraftState(dr);
+      void mirrorLocalState(g, d, 'app_open');
       setReady(true);
       track('app_open');
 
@@ -206,6 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...makeSyncFields(now),
     };
     await goalRepository.save(goal);
+    void mirrorLocalState([...goals, goal], deposits, 'goal_created');
     setGoals((prev) => [...prev, goal]);
     await updateSettings({ activeGoalId: goal.id });
     return goal;
@@ -259,6 +262,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         g.id === id ? { ...g, status: 'archived' as const, updatedAt: new Date().toISOString(), ...touchSyncFields(g, new Date().toISOString()) } : g,
       );
       void goalRepository.replaceAll(next);
+      void mirrorLocalState(next, deposits, 'goal_archived');
       return next;
     });
   }, []);
@@ -293,6 +297,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       await depositRepository.add(deposit);
       const firstEver = deposits.filter((d) => d.goalId === goalId).length === 0;
+      void mirrorLocalState(goals, [...deposits, deposit], 'deposit_added');
       setDeposits((prev) => [...prev, deposit]);
 
       track('deposit_made', { amount });
@@ -315,6 +320,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             g.id === goalId ? { ...g, status: 'completed' as const, updatedAt: now, ...touchSyncFields(g, now) } : g,
           );
           void goalRepository.replaceAll(next);
+          void mirrorLocalState(next, [...deposits, deposit], 'goal_completed');
           return next;
         });
       }
