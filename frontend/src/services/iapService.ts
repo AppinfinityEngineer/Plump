@@ -1,10 +1,11 @@
-// iapService — ThoughtSnap Labs / SnapBack AI direct StoreKit pattern.
-// Real Apple IAP runs ONLY in standalone/dev (EAS / TestFlight / App Store) builds.
-// Expo Go, web preview and Android dev fall back to a simulated purchase so the
-// full product flow is demoable. NO RevenueCat.
+// iapService — ThoughtSnap Labs direct StoreKit pattern, aligned with proven Puffless/SnapBack flow.
 //
-// IMPORTANT: react-native-iap is required lazily so it never loads (and never
-// crashes) in Expo Go / web where the native module is unavailable.
+// Real Apple IAP runs only in standalone/dev-client/TestFlight/App Store iOS builds.
+// Expo Go/web/Android dev use a simulated local purchase so the app journey stays demoable.
+// No RevenueCat. No backend entitlement authority. No Apple server validation in launch lane.
+//
+// The real StoreKit unlock happens from purchaseUpdatedListener, not from the request call.
+// This matches the Puffless pattern that was proven to work.
 
 import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
@@ -14,6 +15,30 @@ import type { Entitlement } from '@/src/models/entitlement';
 import { entitlementRepository } from '@/src/storage/repositories';
 
 export type PlumpProductId = 'plump.monthly' | 'plump.annual' | 'plump.lifetime';
+export type PlumpPlan = 'monthly' | 'annual' | 'lifetime';
+
+export const PLUMP_PRODUCT_IDS = {
+  monthly: 'plump.monthly',
+  annual: 'plump.annual',
+  lifetime: 'plump.lifetime',
+} as const;
+
+export const PLUMP_PRODUCT_ID_LIST: PlumpProductId[] = [
+  PLUMP_PRODUCT_IDS.monthly,
+  PLUMP_PRODUCT_IDS.annual,
+  PLUMP_PRODUCT_IDS.lifetime,
+];
+
+export function planForProductId(productId?: string): PlumpPlan | null {
+  if (productId === PLUMP_PRODUCT_IDS.monthly) return 'monthly';
+  if (productId === PLUMP_PRODUCT_IDS.annual) return 'annual';
+  if (productId === PLUMP_PRODUCT_IDS.lifetime) return 'lifetime';
+  return null;
+}
+
+export function isPlumpProduct(productId?: string): productId is PlumpProductId {
+  return Boolean(productId && PLUMP_PRODUCT_ID_LIST.includes(productId as PlumpProductId));
+}
 
 export interface PlumpProduct {
   productId: PlumpProductId;
@@ -22,142 +47,275 @@ export interface PlumpProduct {
   isSubscription: boolean;
 }
 
-// Minimal shape of the native react-native-iap module we rely on.
+interface StoreProduct {
+  productId?: string;
+  price?: string;
+  localizedPrice?: string;
+  title?: string;
+  description?: string;
+}
+
 interface IapPurchase {
   productId: string;
   transactionId?: string;
   transactionReceipt?: string;
   originalTransactionIdentifierIOS?: string;
 }
+
 interface IapModule {
-  initConnection: () => Promise<boolean>;
-  getProducts: (args: { skus: string[] }) => Promise<unknown[]>;
-  getSubscriptions: (args: { skus: string[] }) => Promise<unknown[]>;
-  requestPurchase: (args: { sku: string }) => Promise<void>;
-  requestSubscription: (args: { sku: string }) => Promise<void>;
-  getAvailablePurchases: () => Promise<IapPurchase[]>;
-  finishTransaction: (args: { purchase: IapPurchase; isConsumable: boolean }) => Promise<void>;
-  purchaseUpdatedListener: (cb: (p: IapPurchase) => void) => { remove: () => void };
-  purchaseErrorListener: (cb: (e: unknown) => void) => { remove: () => void };
+  clearTransactionIOS?: () => Promise<void>;
+  endConnection?: () => Promise<void>;
+  fetchProducts?: (args: { skus: string[]; type?: 'subs' | 'in-app' }) => Promise<StoreProduct[]>;
+  finishTransaction?: (args: { purchase: IapPurchase; isConsumable: boolean }) => Promise<void>;
+  getAvailablePurchases?: () => Promise<IapPurchase[]>;
+  getProducts?: (args: { skus: string[] }) => Promise<StoreProduct[]>;
+  getSubscriptions?: (args: { skus: string[] }) => Promise<StoreProduct[]>;
+  initConnection?: () => Promise<boolean>;
+  purchaseErrorListener?: (callback: (error: unknown) => void) => { remove: () => void };
+  purchaseUpdatedListener?: (callback: (purchase: IapPurchase) => void) => { remove: () => void };
+  requestPurchase?: (args: unknown) => Promise<void>;
+  requestSubscription?: (args: unknown) => Promise<void>;
 }
 
-export function isRealIapAvailable(): boolean {
-  return (
-    Platform.OS === 'ios' &&
-    Constants.executionEnvironment !== ExecutionEnvironment.StoreClient
-  );
+let connected = false;
+let nativeIap: IapModule | null = null;
+let updateSubscription: { remove: () => void } | null = null;
+let errorSubscription: { remove: () => void } | null = null;
+
+function isExpoGo(): boolean {
+  return Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.appOwnership === 'expo';
 }
 
-function loadIap(): IapModule | null {
-  if (!isRealIapAvailable()) return null;
+function canUseNativeIap(): boolean {
+  return Platform.OS === 'ios' && !isExpoGo();
+}
+
+function getIapModule(): IapModule | null {
+  if (!canUseNativeIap()) return null;
+  if (nativeIap) return nativeIap;
+
   try {
+    // Runtime require avoids crashing Expo Go while allowing TestFlight/App Store builds to load StoreKit.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('react-native-iap') as IapModule;
+    nativeIap = require('react-native-iap') as IapModule;
+    return nativeIap;
   } catch {
     return null;
   }
 }
 
-let initialized = false;
+export function isRealIapAvailable(): boolean {
+  return canUseNativeIap() && Boolean(getIapModule());
+}
+
+function fallbackProducts(): PlumpProduct[] {
+  const cfg = getConfig();
+  return [
+    { productId: PLUMP_PRODUCT_IDS.annual, title: 'Annual', priceLabel: cfg.prices.annual, isSubscription: true },
+    { productId: PLUMP_PRODUCT_IDS.monthly, title: 'Monthly', priceLabel: cfg.prices.monthly, isSubscription: true },
+    { productId: PLUMP_PRODUCT_IDS.lifetime, title: 'Lifetime', priceLabel: cfg.prices.lifetime, isSubscription: false },
+  ];
+}
+
+function mergeStoreProduct(fallback: PlumpProduct, storeProducts: StoreProduct[]): PlumpProduct {
+  const store = storeProducts.find((item) => item.productId === fallback.productId);
+  if (!store) return fallback;
+
+  return {
+    ...fallback,
+    title: store.title || fallback.title,
+    priceLabel: store.localizedPrice || store.price || fallback.priceLabel,
+  };
+}
 
 export async function initIAP(): Promise<void> {
-  if (initialized) return;
-  const iap = loadIap();
-  if (!iap) {
-    initialized = true; // simulated mode
-    return;
+  const iap = getIapModule();
+  if (!iap) return;
+
+  if (!connected) {
+    try {
+      connected = iap.initConnection ? await iap.initConnection() : true;
+    } catch {
+      connected = false;
+      return;
+    }
+
+    try {
+      await iap.clearTransactionIOS?.();
+    } catch {
+      // Ignore stale transaction cleanup failures.
+    }
   }
-  try {
-    await iap.initConnection();
-    initialized = true;
-  } catch {
-    initialized = true;
+}
+
+export async function closeIAP(): Promise<void> {
+  updateSubscription?.remove();
+  errorSubscription?.remove();
+  updateSubscription = null;
+  errorSubscription = null;
+
+  const iap = getIapModule();
+  if (connected && iap?.endConnection) {
+    await iap.endConnection();
+    connected = false;
   }
 }
 
 export async function loadProducts(): Promise<PlumpProduct[]> {
-  const cfg = getConfig();
-  const fallback: PlumpProduct[] = [
-    { productId: 'plump.annual', title: 'Annual', priceLabel: cfg.prices.annual, isSubscription: true },
-    { productId: 'plump.monthly', title: 'Monthly', priceLabel: cfg.prices.monthly, isSubscription: true },
-    { productId: 'plump.lifetime', title: 'Lifetime', priceLabel: cfg.prices.lifetime, isSubscription: false },
-  ];
-  const iap = loadIap();
+  const fallback = fallbackProducts();
+  await initIAP();
+
+  const iap = getIapModule();
   if (!iap) return fallback;
+
   try {
-    // Fetch from App Store; gracefully degrade to fallback labels while
-    // App Store Connect propagation settles.
-    await iap.getSubscriptions({ skus: [cfg.products.monthly, cfg.products.annual] });
-    await iap.getProducts({ skus: [cfg.products.lifetime] });
-    return fallback;
+    let subs: StoreProduct[] = [];
+    let lifetime: StoreProduct[] = [];
+
+    if (iap.fetchProducts) {
+      subs = await iap.fetchProducts({ skus: [PLUMP_PRODUCT_IDS.monthly, PLUMP_PRODUCT_IDS.annual], type: 'subs' });
+      lifetime = await iap.fetchProducts({ skus: [PLUMP_PRODUCT_IDS.lifetime], type: 'in-app' });
+    } else {
+      if (iap.getSubscriptions) {
+        subs = await iap.getSubscriptions({ skus: [PLUMP_PRODUCT_IDS.monthly, PLUMP_PRODUCT_IDS.annual] });
+      }
+      if (iap.getProducts) {
+        lifetime = await iap.getProducts({ skus: [PLUMP_PRODUCT_IDS.lifetime] });
+      }
+    }
+
+    const storeProducts = [...subs, ...lifetime];
+    return fallback.map((product) => mergeStoreProduct(product, storeProducts));
   } catch {
     return fallback;
   }
 }
 
-function entitlementForProduct(productId: PlumpProductId): Entitlement {
-  if (productId === 'plump.lifetime') {
-    return { isPro: true, productId, status: 'lifetime', environment: 'sandbox' };
+function entitlementForProduct(productId: PlumpProductId, environment: 'sandbox' | 'production' = 'sandbox'): Entitlement {
+  if (productId === PLUMP_PRODUCT_IDS.lifetime) {
+    return { isPro: true, productId, status: 'lifetime', environment };
   }
-  if (productId === 'plump.annual') {
+
+  if (productId === PLUMP_PRODUCT_IDS.annual) {
     const expires = new Date();
     expires.setFullYear(expires.getFullYear() + 1);
-    return { isPro: true, productId, status: 'trial', expiresDate: expires.toISOString(), environment: 'sandbox' };
+    return { isPro: true, productId, status: 'trial', expiresDate: expires.toISOString(), environment };
   }
+
   const expires = new Date();
   expires.setMonth(expires.getMonth() + 1);
-  return { isPro: true, productId, status: 'active', expiresDate: expires.toISOString(), environment: 'sandbox' };
+  return { isPro: true, productId, status: 'active', expiresDate: expires.toISOString(), environment };
 }
 
 export interface PurchaseResult {
   success: boolean;
   entitlement?: Entitlement;
   simulated: boolean;
+  pending?: boolean;
   error?: string;
 }
 
 export async function purchaseProduct(productId: PlumpProductId): Promise<PurchaseResult> {
-  const iap = loadIap();
+  await initIAP();
+
+  const iap = getIapModule();
   if (!iap) {
-    // Simulated purchase (preview / Expo Go / web / Android dev)
-    const entitlement = entitlementForProduct(productId);
+    const entitlement = entitlementForProduct(productId, 'sandbox');
     await entitlementRepository.set(entitlement);
     return { success: true, entitlement, simulated: true };
   }
+
   try {
-    if (productId === 'plump.lifetime') {
-      await iap.requestPurchase({ sku: productId });
-    } else {
-      await iap.requestSubscription({ sku: productId });
+    if (productId === PLUMP_PRODUCT_IDS.lifetime) {
+      if (!iap.requestPurchase) throw new Error('StoreKit purchase API is unavailable in this build.');
+
+      try {
+        await iap.requestPurchase({
+          request: {
+            ios: { sku: productId },
+            android: { skus: [productId] },
+          },
+          type: 'in-app',
+        });
+      } catch (error: any) {
+        const message = String(error?.message || '');
+        if (
+          !message.includes('Missing purchase request configuration') &&
+          !message.includes('request configuration') &&
+          !message.includes('requestPurchase')
+        ) {
+          throw error;
+        }
+        await iap.requestPurchase({ sku: productId });
+      }
+
+      return { success: true, simulated: false, pending: true };
     }
-    // Real entitlement is granted by the purchaseUpdatedListener flow.
-    return { success: true, simulated: false };
-  } catch (e) {
-    return { success: false, simulated: false, error: String(e) };
+
+    if (iap.requestPurchase) {
+      try {
+        await iap.requestPurchase({
+          request: {
+            ios: { sku: productId },
+            android: { skus: [productId] },
+          },
+          type: 'subs',
+        });
+        return { success: true, simulated: false, pending: true };
+      } catch (error: any) {
+        const message = String(error?.message || '');
+        if (
+          !message.includes('Missing purchase request configuration') &&
+          !message.includes('request configuration') &&
+          !message.includes('requestPurchase')
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    if (iap.requestSubscription) {
+      await iap.requestSubscription({
+        sku: productId,
+        request: {
+          ios: { sku: productId },
+          android: { skus: [productId] },
+        },
+        type: 'subs',
+      });
+      return { success: true, simulated: false, pending: true };
+    }
+
+    throw new Error('StoreKit subscription API is unavailable in this build.');
+  } catch (error) {
+    return { success: false, simulated: false, error: String(error) };
   }
 }
 
 export async function restorePurchases(): Promise<PurchaseResult> {
-  const iap = loadIap();
-  if (!iap) {
+  await initIAP();
+
+  const iap = getIapModule();
+  if (!iap?.getAvailablePurchases) {
     const current = await entitlementRepository.get();
     return { success: current.isPro, entitlement: current, simulated: true };
   }
+
   try {
     const purchases = await iap.getAvailablePurchases();
-    const active = purchases.find((p) =>
-      ['plump.monthly', 'plump.annual', 'plump.lifetime'].includes(p.productId),
-    );
-    if (active) {
-      const entitlement = entitlementForProduct(active.productId as PlumpProductId);
-      entitlement.originalTransactionId = active.originalTransactionIdentifierIOS;
-      entitlement.environment = 'production';
-      await entitlementRepository.set(entitlement);
-      return { success: true, entitlement, simulated: false };
+    const active = purchases.find((purchase) => isPlumpProduct(purchase.productId));
+
+    if (!active) {
+      return { success: false, simulated: false };
     }
-    return { success: false, simulated: false };
-  } catch (e) {
-    return { success: false, simulated: false, error: String(e) };
+
+    const entitlement = entitlementForProduct(active.productId as PlumpProductId, 'production');
+    entitlement.originalTransactionId = active.originalTransactionIdentifierIOS ?? active.transactionId;
+    await entitlementRepository.set(entitlement);
+
+    return { success: true, entitlement, simulated: false };
+  } catch (error) {
+    return { success: false, simulated: false, error: String(error) };
   }
 }
 
@@ -165,33 +323,46 @@ export async function getCurrentEntitlement(): Promise<Entitlement> {
   return entitlementRepository.get();
 }
 
-export function listenForPurchaseUpdates(
-  onEntitlement: (e: Entitlement) => void,
-): () => void {
-  const iap = loadIap();
+export function listenForPurchaseUpdates(onEntitlement: (entitlement: Entitlement) => void): () => void {
+  const iap = getIapModule();
   if (!iap) return () => {};
-  const updateSub = iap.purchaseUpdatedListener(async (purchase) => {
-    const entitlement = entitlementForProduct(purchase.productId as PlumpProductId);
-    entitlement.originalTransactionId = purchase.originalTransactionIdentifierIOS;
-    entitlement.environment = 'production';
-    await entitlementRepository.set(entitlement);
-    await finishTransactionSafely(purchase);
-    onEntitlement(entitlement);
-  });
-  const errorSub = iap.purchaseErrorListener(() => {});
+
+  if (!updateSubscription && iap.purchaseUpdatedListener) {
+    updateSubscription = iap.purchaseUpdatedListener(async (purchase) => {
+      if (!isPlumpProduct(purchase.productId)) return;
+
+      const entitlement = entitlementForProduct(purchase.productId, 'production');
+      entitlement.originalTransactionId = purchase.originalTransactionIdentifierIOS ?? purchase.transactionId;
+
+      await entitlementRepository.set(entitlement);
+      await finishTransactionSafely(purchase);
+
+      onEntitlement(entitlement);
+    });
+  }
+
+  if (!errorSubscription && iap.purchaseErrorListener) {
+    errorSubscription = iap.purchaseErrorListener(() => {
+      // Purchase errors are surfaced from request calls where available.
+      // Listener is kept so StoreKit error events do not become unhandled.
+    });
+  }
+
   return () => {
-    updateSub.remove();
-    errorSub.remove();
+    updateSubscription?.remove();
+    errorSubscription?.remove();
+    updateSubscription = null;
+    errorSubscription = null;
   };
 }
 
 export async function finishTransactionSafely(purchase: IapPurchase): Promise<void> {
-  const iap = loadIap();
-  if (!iap) return;
+  const iap = getIapModule();
+  if (!iap?.finishTransaction) return;
+
   try {
-    const isConsumable = false;
-    await iap.finishTransaction({ purchase, isConsumable });
+    await iap.finishTransaction({ purchase, isConsumable: false });
   } catch {
-    // ignore — will retry on next launch
+    // Ignore — StoreKit can retry unfinished transactions on next launch.
   }
 }

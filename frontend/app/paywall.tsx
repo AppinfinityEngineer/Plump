@@ -39,7 +39,7 @@ const PREMIUM = {
 
 export default function Paywall() {
   const router = useRouter();
-  const { colors, config, purchase, restore, activeGoal } = useApp();
+  const { colors, config, purchase, restore, activeGoal, isPro } = useApp();
   const { colors: themedColors } = useTheme();
   const [selected, setSelected] = useState<PlanId>('plump.annual');
   const [busy, setBusy] = useState<PlanId | 'restore' | null>(null);
@@ -58,12 +58,16 @@ export default function Paywall() {
 
   const goPaid = () => router.replace('/(tabs)');
 
+  useEffect(() => {
+    if (isPro) goPaid();
+  }, [isPro]);
+
   const onPurchase = async (plan: PlanId) => {
     void haptics.medium();
     setBusy(plan);
     const result = await purchase(plan);
     setBusy(null);
-    if (result.success) {
+    if (result.success && result.entitlement) {
       void haptics.success();
       goPaid();
     }
