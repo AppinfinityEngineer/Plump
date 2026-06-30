@@ -61,6 +61,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "appStoreSku": "PLUMP-IOS-001",
+      "launchVersion": "1.0.0",
+      "launchBuildNumber": "1"
     }
   }
 }

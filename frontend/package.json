@@ -14,7 +14,8 @@
     "eas:build:dev": "eas build --platform ios --profile development",
     "eas:build:preview": "eas build --platform ios --profile preview",
     "eas:build:production": "eas build --platform ios --profile production",
-    "eas:submit:production": "eas submit --platform ios --profile production"
+    "eas:submit:production": "eas submit --platform ios --profile production",
+    "ship:testflight": "eas build --platform ios --profile production --auto-submit"
   },
   "dependencies": {
     "@expo/metro-runtime": "6.1.2",
