@@ -54,7 +54,7 @@ function AppShell() {
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
-        <Stack.Screen name="paywall" options={{ presentation: 'modal', gestureEnabled: false }} />
+        <Stack.Screen name="paywall" options={{ gestureEnabled: false }} />
       </Stack>
     </>
   );

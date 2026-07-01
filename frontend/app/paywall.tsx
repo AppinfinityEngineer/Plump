@@ -56,23 +56,7 @@ export default function Paywall() {
     track('paywall_variant_assigned', { variant: config.paywallVariant });
   }, [config.paywallVariant]);
 
-  const goPaid = () => {
-    const nav = router as unknown as {
-      canDismiss?: () => boolean;
-      dismissAll?: () => void;
-      replace: typeof router.replace;
-    };
-
-    try {
-      if (nav.canDismiss?.()) nav.dismissAll?.();
-    } catch {
-      // If the native stack cannot dismiss, still replace below.
-    }
-
-    setTimeout(() => {
-      nav.replace('/(tabs)' as never);
-    }, 0);
-  };
+  const goPaid = () => router.replace('/(tabs)');
 
   useEffect(() => {
     if (isPro) goPaid();
@@ -86,6 +70,15 @@ export default function Paywall() {
     if (result.success && result.entitlement) {
       void haptics.success();
       goPaid();
+      return;
+    }
+
+    if (result.success && result.pending) {
+      const restored = await restore();
+      if (restored.success) {
+        void haptics.success();
+        goPaid();
+      }
     }
   };
 

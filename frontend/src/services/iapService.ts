@@ -207,6 +207,51 @@ function entitlementForProduct(productId: PlumpProductId, environment: 'sandbox'
   return { isPro: true, productId, status: 'active', expiresDate: expires.toISOString(), environment };
 }
 
+function purchaseCandidatesFromResult(result: unknown): IapPurchase[] {
+  if (!result) return [];
+
+  const asArray = Array.isArray(result) ? result : [result];
+  const candidates: IapPurchase[] = [];
+
+  for (const item of asArray) {
+    if (!item || typeof item !== 'object') continue;
+
+    const direct = item as Partial<IapPurchase>;
+    if (typeof direct.productId === 'string') {
+      candidates.push(direct as IapPurchase);
+      continue;
+    }
+
+    const nestedPurchase = (item as { purchase?: Partial<IapPurchase> }).purchase;
+    if (nestedPurchase && typeof nestedPurchase.productId === 'string') {
+      candidates.push(nestedPurchase as IapPurchase);
+      continue;
+    }
+
+    const nestedPurchases = (item as { purchases?: Partial<IapPurchase>[] }).purchases;
+    if (Array.isArray(nestedPurchases)) {
+      for (const nested of nestedPurchases) {
+        if (nested && typeof nested.productId === 'string') candidates.push(nested as IapPurchase);
+      }
+    }
+  }
+
+  return candidates;
+}
+
+async function entitlementFromPurchaseResult(expectedProductId: PlumpProductId, result: unknown): Promise<Entitlement | undefined> {
+  const purchase = purchaseCandidatesFromResult(result).find((candidate) => candidate.productId === expectedProductId);
+  if (!purchase || !isPlumpProduct(purchase.productId)) return undefined;
+
+  const entitlement = entitlementForProduct(purchase.productId, 'production');
+  entitlement.originalTransactionId = purchase.originalTransactionIdentifierIOS ?? purchase.transactionId;
+
+  await entitlementRepository.set(entitlement);
+  await finishTransactionSafely(purchase);
+
+  return entitlement;
+}
+
 export interface PurchaseResult {
   success: boolean;
   entitlement?: Entitlement;
@@ -230,13 +275,15 @@ export async function purchaseProduct(productId: PlumpProductId): Promise<Purcha
       if (!iap.requestPurchase) throw new Error('StoreKit purchase API is unavailable in this build.');
 
       try {
-        await iap.requestPurchase({
+        const purchaseResult = await iap.requestPurchase({
           request: {
             ios: { sku: productId },
             android: { skus: [productId] },
           },
           type: 'in-app',
         });
+        const entitlement = await entitlementFromPurchaseResult(productId, purchaseResult);
+        if (entitlement) return { success: true, entitlement, simulated: false };
       } catch (error: any) {
         const message = String(error?.message || '');
         if (
@@ -246,7 +293,9 @@ export async function purchaseProduct(productId: PlumpProductId): Promise<Purcha
         ) {
           throw error;
         }
-        await iap.requestPurchase({ sku: productId });
+        const purchaseResult = await iap.requestPurchase({ sku: productId });
+        const entitlement = await entitlementFromPurchaseResult(productId, purchaseResult);
+        if (entitlement) return { success: true, entitlement, simulated: false };
       }
 
       return { success: true, simulated: false, pending: true };
@@ -254,13 +303,15 @@ export async function purchaseProduct(productId: PlumpProductId): Promise<Purcha
 
     if (iap.requestPurchase) {
       try {
-        await iap.requestPurchase({
+        const purchaseResult = await iap.requestPurchase({
           request: {
             ios: { sku: productId },
             android: { skus: [productId] },
           },
           type: 'subs',
         });
+        const entitlement = await entitlementFromPurchaseResult(productId, purchaseResult);
+        if (entitlement) return { success: true, entitlement, simulated: false };
         return { success: true, simulated: false, pending: true };
       } catch (error: any) {
         const message = String(error?.message || '');
@@ -275,7 +326,7 @@ export async function purchaseProduct(productId: PlumpProductId): Promise<Purcha
     }
 
     if (iap.requestSubscription) {
-      await iap.requestSubscription({
+      const purchaseResult = await iap.requestSubscription({
         sku: productId,
         request: {
           ios: { sku: productId },
@@ -283,6 +334,8 @@ export async function purchaseProduct(productId: PlumpProductId): Promise<Purcha
         },
         type: 'subs',
       });
+      const entitlement = await entitlementFromPurchaseResult(productId, purchaseResult);
+      if (entitlement) return { success: true, entitlement, simulated: false };
       return { success: true, simulated: false, pending: true };
     }
 
