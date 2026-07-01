@@ -1,0 +1,14 @@
+{
+  "name": "plump-live-ops",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal token-protected Plump live ops dashboard for Render.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test_liveops.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

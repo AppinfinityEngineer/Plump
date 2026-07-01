@@ -238,9 +238,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const result = await purchaseProduct(productId);
     if (result.success && result.entitlement) {
       setEntitlementState(result.entitlement);
-      if (productId === 'plump.lifetime') track('lifetime_purchase_completed');
-      else if (productId === 'plump.annual') track('trial_started');
-      else track('purchase_completed');
+      if (productId === 'plump.lifetime') track('lifetime_purchase_completed', { productId, plan: 'lifetime' });
+      else if (productId === 'plump.annual') track('trial_started', { productId, plan: 'annual' });
+      else track('purchase_completed', { productId, plan: 'monthly' });
     }
     return result;
   }, []);
