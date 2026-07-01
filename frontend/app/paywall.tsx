@@ -25,7 +25,7 @@ const TERMS_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stde
 const PRIVACY_URL = 'https://docs.google.com/document/d/e/2PACX-1vQzXNr50T8jjdN3oYoszMwBshdex7y3PSh0a3p7tE6zEKG5Jb4k8dEmXLeVYYdr2T3bnqjJJIJQxQ5S/pub';
 
 function shouldShowPaywallClose(mode: PaywallMode): boolean {
-  return mode === 'dev' || mode === 'testflight';
+  return mode === 'dev' && process.env.EXPO_PUBLIC_ALLOW_PAYWALL_CLOSE === 'true';
 }
 
 
@@ -107,7 +107,7 @@ export default function Paywall() {
           Unlock Plump
         </AppText>
         <AppText variant="body" color={colors.muted} style={styles.sub}>
-          Plump is a paid savings challenge app. Choose a subscription or lifetime unlock to continue with saving challenges, mascot progress, and share cards.
+          Plump is free to download, then requires a subscription or lifetime unlock after onboarding to use saving challenges, mascot progress, reminders, and share cards.
         </AppText>
 
         <View style={[styles.previewPanel, { backgroundColor: PREMIUM.ivory, borderColor: PREMIUM.blush }]}>
@@ -127,7 +127,7 @@ export default function Paywall() {
           <View style={styles.previewCopy}>
             <AppText variant="bodyBold" style={{ color: PREMIUM.cocoa }}>Unlock the app you just created</AppText>
             <AppText variant="caption" style={{ marginTop: 3 }}>
-              Your card is ready. Payment is required to use Plump after onboarding.
+              Your card is ready. Paid access is required to continue after onboarding.
             </AppText>
           </View>
         </View>

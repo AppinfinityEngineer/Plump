@@ -9,7 +9,7 @@ import type { RefObject } from 'react';
 import type { View } from 'react-native';
 
 export function buildCaption(goalName: string, saved: string): string {
-  return `My Plump is getting rounder 🐷💚 ${saved} saved toward ${goalName}. plump.app`;
+  return `My Plump is getting rounder 🐻💚 ${saved} saved toward ${goalName}. plump.app`;
 }
 
 export async function shareCard(

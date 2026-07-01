@@ -27,10 +27,10 @@ export default function StylePreview() {
   const { draft, setDraft } = useApp();
   const [selected, setSelected] = useState<CardPaletteId>((draft.cardPalette as CardPaletteId) ?? 'cream');
 
-  const onSelect = (id: CardPaletteId) => {
+  const onSelect = async (id: CardPaletteId) => {
     void haptics.selection();
     setSelected(id);
-    void setDraft({ cardPalette: id });
+    await setDraft({ cardPalette: id });
     track('challenge_style_selected', { palette: id });
   };
 
@@ -73,7 +73,7 @@ export default function StylePreview() {
               <Pressable
                 key={id}
                 testID={`style-${id}`}
-                onPress={() => onSelect(id)}
+                onPress={() => void onSelect(id)}
                 style={[
                   styles.chip,
                   shadow(colors),
@@ -92,8 +92,8 @@ export default function StylePreview() {
       <Button
         label="Continue"
         testID="style-continue-button"
-        onPress={() => {
-          void setDraft({ cardPalette: selected });
+        onPress={async () => {
+          await setDraft({ cardPalette: selected });
           router.push('/onboarding/goal');
         }}
       />

@@ -1,6 +1,5 @@
 import { View, StyleSheet, ScrollView, Switch, Pressable, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 import { Screen, AppText, Card, Badge } from '@/src/components/ui';
 import { Mascot, type MascotVariant } from '@/src/components/Mascot';
@@ -53,9 +52,8 @@ function Row({
 }
 
 export default function Settings() {
-  const router = useRouter();
   const { colors } = useTheme();
-  const { settings, entitlement, updateSettings, restore, activeGoal, resetDemoState } = useApp();
+  const { settings, entitlement, updateSettings, restore, activeGoal } = useApp();
 
   const statusLabel =
     entitlement.status === 'lifetime' ? 'Lifetime unlock active'
@@ -155,23 +153,7 @@ export default function Settings() {
           <Row icon="shield-checkmark" label="Privacy policy" testID="settings-privacy" onPress={() => Linking.openURL(PRIVACY_URL)} />
           <Row icon="reader" label="Terms of use" testID="settings-terms" onPress={() => Linking.openURL(TERMS_URL)} />
         </Card>
-
-        {__DEV__ ? (
-          <Card style={styles.section}>
-            <Row
-              icon="refresh-circle"
-              label="Reset onboarding / test data"
-              sublabel="Dev only — clears local card, saves, entitlement and starts onboarding again."
-              testID="settings-hard-reset-demo"
-              onPress={async () => {
-                await resetDemoState();
-                router.replace('/onboarding' as never);
-              }}
-            />
-          </Card>
-        ) : null}
-
-        <AppText variant="caption" style={styles.footer}>
+<AppText variant="caption" style={styles.footer}>
           Plump: Saving Challenges{'\n'}A ThoughtSnap Labs product
         </AppText>
       </ScrollView>
