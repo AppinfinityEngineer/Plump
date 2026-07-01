@@ -339,6 +339,39 @@ async def live_ops_summary(token: Optional[str] = None, x_live_ops_token: Option
     return summarize_live_ops_events(flatten_event_batches(docs))
 
 
+@api_router.post("/live-ops/reset-events")
+async def live_ops_reset_events(
+    confirm: str,
+    token: Optional[str] = None,
+    x_live_ops_token: Optional[str] = Header(default=None),
+) -> dict[str, Any]:
+    """Admin-only reset for pre-launch Live Ops event batches.
+
+    This deletes from the exact Mongo collection used by the dashboard:
+    db["events"].
+    """
+    require_live_ops_admin(token=token, x_live_ops_token=x_live_ops_token)
+
+    if confirm != "RESET_EVENTS":
+        raise HTTPException(status_code=400, detail="confirm must be RESET_EVENTS")
+
+    if db is None:
+        raise HTTPException(status_code=503, detail="mongo not configured")
+
+    before = await db["events"].count_documents({})
+    result = await db["events"].delete_many({})
+    after = await db["events"].count_documents({})
+
+    return {
+        "status": "ok",
+        "collection": "events",
+        "before": before,
+        "deleted": result.deleted_count,
+        "after": after,
+        "time": now_iso(),
+    }
+
+
 @app.get("/ops", response_class=HTMLResponse)
 async def live_ops_dashboard(token: Optional[str] = None, x_live_ops_token: Optional[str] = Header(default=None)) -> HTMLResponse:
     require_live_ops_admin(token=token, x_live_ops_token=x_live_ops_token)
