@@ -64,6 +64,23 @@ export function getLuckySaveSuggestion(goal: Goal, progress: ChallengeProgress):
   const seed = stableDaySeed(goal.id);
 
   if (goal.challengeType === 'envelope_100') {
+    if (progress.filledCount < 3) {
+      const slot = progress.nextSuggestedSlot ?? 1;
+      const amount = slotAmount(goal.challengeType, slot);
+      return {
+        mode: 'next',
+        eyebrow: progress.filledCount === 0 ? 'START SMALL' : 'NEXT ENVELOPE',
+        title: `Envelope ${slot}`,
+        label: `Envelope ${slot}`,
+        amount,
+        slot,
+        tagline: progress.filledCount === 0
+          ? 'Start with the easiest envelope and build momentum.'
+          : 'Keep the streak simple with the next envelope.',
+        ctaLabel: progress.filledCount === 0 ? `Start with envelope ${slot}` : `Save envelope ${slot}`,
+      };
+    }
+
     const mode = envelopeMode(seed);
     const slot = pickSlot(progress.remainingSlots, mode, seed) ?? progress.nextSuggestedSlot;
     const safeSlot = slot ?? 1;

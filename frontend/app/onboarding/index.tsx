@@ -18,7 +18,7 @@ export default function OnboardingIntro() {
 
   return (
     <Screen style={styles.container} testID="onboarding-intro">
-      <OnboardingHeader step={0} total={10} showBack={false} />
+      <OnboardingHeader step={0} total={12} showBack={false} />
       <View style={styles.body}>
         <AppText variant="title" style={styles.headline} color={colors.brandPrimary}>
           Save money.{'\n'}Make it cute.
@@ -27,7 +27,7 @@ export default function OnboardingIntro() {
           <Mascot variant="honey" plumpness={0.45} size={220} />
         </View>
         <AppText variant="body" style={styles.sub} color={colors.muted}>
-          Build your savings identity, design your card, then unlock the satisfying daily save loop.
+          Create a saving challenge you’ll actually want to finish. Pick a goal, card style, mascot, and first save.
         </AppText>
       </View>
       <Button

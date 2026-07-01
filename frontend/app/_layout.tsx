@@ -5,10 +5,10 @@ import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
 
 import { useIconFonts } from '@/src/hooks/use-icon-fonts';
-import { AppProvider } from '@/src/state/AppProvider';
-import { StatusBar } from 'expo-status-bar';
+import { AppProvider, useApp } from '@/src/state/AppProvider';
 
 LogBox.ignoreAllLogs(true);
 
@@ -40,12 +40,22 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FBF4E9' } }}>
-            <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-          </Stack>
+          <AppShell />
         </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function AppShell() {
+  const { isDark, colors } = useApp();
+
+  return (
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.surface } }}>
+        <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+      </Stack>
+    </>
   );
 }

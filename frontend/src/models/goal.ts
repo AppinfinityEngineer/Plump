@@ -7,6 +7,7 @@ export interface Goal extends LocalSyncFields {
   id: string;
   challengeType: ChallengeType;
   name: string;
+  ownerName?: string;
   targetAmount: number;
   mascotVariant: string;
   colorTheme: string;

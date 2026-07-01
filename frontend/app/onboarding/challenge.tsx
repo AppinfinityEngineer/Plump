@@ -28,12 +28,12 @@ export default function ChallengePicker() {
 
   return (
     <Screen style={styles.container} testID="onboarding-challenge">
-      <OnboardingHeader step={2} total={10} />
+      <OnboardingHeader step={3} total={12} />
       <AppText variant="title" style={styles.title}>
         Choose your challenge
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Pick the challenge path your card will follow.
+        Choose the saving path you want Plump to turn into visible progress.
       </AppText>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.lg }} showsVerticalScrollIndicator={false}>

@@ -25,12 +25,12 @@ export default function PlumpPreview() {
 
   return (
     <Screen style={styles.container} testID="onboarding-preview">
-      <OnboardingHeader step={7} total={10} />
+      <OnboardingHeader step={9} total={12} />
       <AppText variant="title" style={styles.title}>
         Watch them plump up
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        This is the emotional progress bar. Every save makes them visibly rounder.
+        Every save makes your mascot and card feel more complete.
       </AppText>
 
       <View style={styles.hero}>
@@ -61,7 +61,7 @@ export default function PlumpPreview() {
         ))}
       </View>
 
-      <Button label="Build my card" testID="preview-generate-button" onPress={() => router.push('/onboarding/generation' as never)} />
+      <Button label="See my plan" testID="preview-generate-button" onPress={() => router.push('/onboarding/plan' as never)} />
     </Screen>
   );
 }

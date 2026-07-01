@@ -23,5 +23,7 @@ export interface OnboardingDraft {
   mascotVariant?: string;
   userName?: string;
   savingReason?: string;
+  savingBlocker?: string;
+  reminderPreference?: string;
   commitmentLevel?: string;
 }

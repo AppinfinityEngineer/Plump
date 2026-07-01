@@ -68,7 +68,7 @@ export default function ChallengeEducation() {
 
   return (
     <Screen style={styles.container} testID="onboarding-education">
-      <OnboardingHeader step={3} total={10} />
+      <OnboardingHeader step={4} total={12} />
       <AppText variant="title" style={styles.title}>
         {explainer.title}
       </AppText>

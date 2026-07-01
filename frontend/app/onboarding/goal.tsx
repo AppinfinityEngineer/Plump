@@ -35,7 +35,7 @@ export default function GoalSetup() {
 
   return (
     <Screen style={styles.container} testID="onboarding-goal">
-      <OnboardingHeader step={5} total={10} />
+      <OnboardingHeader step={6} total={12} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           style={{ flex: 1 }}
@@ -47,7 +47,7 @@ export default function GoalSetup() {
             Make it yours
           </AppText>
           <AppText variant="body" color={colors.muted} style={styles.sub}>
-            Your card converts better when it feels personal. Add your name and the thing you are saving for.
+            Add your name and the thing you are saving for so your card feels personal.
           </AppText>
 
           <AppText variant="caption" style={styles.label}>YOUR NAME</AppText>
@@ -55,7 +55,7 @@ export default function GoalSetup() {
             testID="user-name-input"
             value={userName}
             onChangeText={setUserName}
-            placeholder="Rich"
+            placeholder="Enter your name"
             placeholderTextColor={colors.muted}
             style={[styles.input, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
             returnKeyType="next"
@@ -66,7 +66,7 @@ export default function GoalSetup() {
             testID="goal-name-input"
             value={name}
             onChangeText={setName}
-            placeholder="Japan trip"
+            placeholder="Holiday, emergency fund, new car..."
             placeholderTextColor={colors.muted}
             style={[styles.input, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.onSurface }]}
             returnKeyType="next"

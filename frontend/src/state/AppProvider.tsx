@@ -83,6 +83,7 @@ interface AppContextValue {
   createGoal: (input: {
     challengeType: ChallengeType;
     name: string;
+    ownerName?: string;
     targetAmount: number;
     mascotVariant: string;
     colorTheme: string;
@@ -197,6 +198,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: uid(),
       challengeType: input.challengeType,
       name: input.name,
+      ownerName: input.ownerName,
       targetAmount: input.targetAmount,
       mascotVariant: input.mascotVariant,
       colorTheme: input.colorTheme,
@@ -220,6 +222,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const goal = await createGoal({
       challengeType,
       name: draft.goalName || 'My savings goal',
+      ownerName: draft.userName?.trim() || undefined,
       targetAmount: draft.targetAmount ?? template.totalTarget,
       mascotVariant: draft.mascotVariant ?? 'honey',
       colorTheme: draft.cardPalette ?? 'cream',

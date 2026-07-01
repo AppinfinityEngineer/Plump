@@ -279,7 +279,7 @@ function SavingsPathScreen({
       <Button
         label={actionLabel(challengeType)}
         testID="envelopes-log-save-button"
-        style={{ marginTop: spacing.lg }}
+        style={styles.pathActionButton}
         onPress={onLog}
       />
 
@@ -515,6 +515,10 @@ const styles = StyleSheet.create({
   },
   pathScroll: {
     paddingBottom: spacing.xl,
+  },
+  pathActionButton: {
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.xl,
   },
   pathHero: {
     marginHorizontal: spacing.xl,

@@ -39,7 +39,7 @@ export default function SavingsPersonality() {
 
   return (
     <Screen style={styles.container} testID="onboarding-personality">
-      <OnboardingHeader step={1} total={10} />
+      <OnboardingHeader step={1} total={12} />
       <View style={styles.hero}>
         <Mascot variant="honey" plumpness={0.18} size={118} />
         <Badge label="Step 1 of your savings identity" bg={colors.brandTertiary} color="#25451D" />
@@ -49,7 +49,7 @@ export default function SavingsPersonality() {
         What are you saving for?
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Plump works better when your card has a reason. Make it feel personal before the paywall ever appears.
+        Pick the reason that will make your card feel worth filling.
       </AppText>
 
       <View style={styles.options}>
@@ -88,7 +88,7 @@ export default function SavingsPersonality() {
         testID="personality-continue-button"
         onPress={() => {
           void setDraft({ savingReason: selected });
-          router.push('/onboarding/challenge');
+          router.push('/onboarding/obstacle' as never);
         }}
       />
     </Screen>

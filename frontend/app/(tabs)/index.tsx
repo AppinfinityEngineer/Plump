@@ -26,6 +26,27 @@ function nextSaveLabel(challengeType: string, slot?: number): string {
   return 'Add a save';
 }
 
+function greetingForOwner(ownerName?: string): string {
+  const cleaned = ownerName?.trim();
+  return cleaned ? `Good morning, ${cleaned}` : 'Good morning';
+}
+
+
+function streakLabel(streak: number): string {
+  return streak > 0 ? `🔥 ${streak} day streak` : '✨ Start your streak';
+}
+
+function suggestionBadge(mode: string): string {
+  return mode === 'next' ? '✨ Next step' : '✨ Plump pick';
+}
+
+function displayGoalTitle(name: string): string {
+  const trimmed = name.trim() || 'Savings goal';
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('fund') || lower.includes('goal') || lower.includes('challenge')) return trimmed;
+  return `${trimmed} fund`;
+}
+
 export default function Home() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -53,9 +74,12 @@ export default function Home() {
   return (
     <Screen edges={['top']} testID="home-dashboard">
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <AppText variant="caption">Good morning</AppText>
+        <AppText variant="caption">{greetingForOwner(activeGoal.ownerName)}</AppText>
         <AppText variant="title" style={{ fontSize: fontSize['2xl'] }}>
-          {activeGoal.name}
+          {displayGoalTitle(activeGoal.name)}
+        </AppText>
+        <AppText variant="caption" style={{ marginTop: 2 }}>
+          {template.shortName} · {formatGBP(progress.target)} target
         </AppText>
 
         <View style={styles.mascotWrap}>
@@ -71,14 +95,14 @@ export default function Home() {
           <ProgressBar percent={progress.percent} />
           <View style={styles.statsRow}>
             <AppText variant="bodyBold">{formatPercent(progress.percent)} complete</AppText>
-            <AppText variant="bodyBold" color={colors.brand}>🔥 {streak.current} day streak</AppText>
+            <AppText variant="bodyBold" color={colors.brand}>{streakLabel(streak.current)}</AppText>
           </View>
         </View>
 
         <Card style={{ marginBottom: spacing.lg }} testID="home-lucky-save-card">
           <View style={styles.luckyEyebrowRow}>
             <AppText variant="caption">{luckySave.eyebrow}</AppText>
-            <AppText variant="caption" color={colors.brandPrimary}>✨ Plump pick</AppText>
+            <AppText variant="caption" color={colors.brandPrimary}>{suggestionBadge(luckySave.mode)}</AppText>
           </View>
           <View style={styles.nextRow}>
             <AppText variant="heading">

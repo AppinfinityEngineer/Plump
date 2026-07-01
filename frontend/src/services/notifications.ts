@@ -3,6 +3,8 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
+const DAILY_SAVE_REMINDER_ID = 'plump.daily-save-reminder';
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
   try {
@@ -19,8 +21,14 @@ export async function requestNotificationPermission(): Promise<boolean> {
 export async function scheduleCadenceReminder(message: string): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
+    await Notifications.cancelScheduledNotificationAsync(DAILY_SAVE_REMINDER_ID);
     await Notifications.scheduleNotificationAsync({
-      content: { title: 'Plump', body: message },
+      identifier: DAILY_SAVE_REMINDER_ID,
+      content: {
+        title: 'Plump',
+        body: message,
+        sound: true,
+      },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 19,

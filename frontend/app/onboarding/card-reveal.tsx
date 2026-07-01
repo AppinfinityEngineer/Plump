@@ -136,7 +136,7 @@ export default function CardReveal() {
 
   return (
     <Screen style={styles.container} testID="card-reveal">
-      <ProgressDots total={10} index={9} />
+      <ProgressDots total={12} index={11} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.heroCopy}>

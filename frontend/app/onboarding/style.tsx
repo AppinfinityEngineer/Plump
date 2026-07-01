@@ -38,12 +38,12 @@ export default function StylePreview() {
 
   return (
     <Screen style={styles.container} testID="onboarding-style">
-      <OnboardingHeader step={4} total={10} />
+      <OnboardingHeader step={5} total={12} />
       <AppText variant="title" style={styles.title}>
         Pick your card style
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Choose the colour system for your envelopes, progress card, and share card.
+        Choose the look of your card, path, and shareable progress moments.
       </AppText>
 
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.lg }}>
@@ -89,7 +89,14 @@ export default function StylePreview() {
         </View>
       </ScrollView>
 
-      <Button label="Continue" testID="style-continue-button" onPress={() => router.push('/onboarding/goal')} />
+      <Button
+        label="Continue"
+        testID="style-continue-button"
+        onPress={() => {
+          void setDraft({ cardPalette: selected });
+          router.push('/onboarding/goal');
+        }}
+      />
     </Screen>
   );
 }

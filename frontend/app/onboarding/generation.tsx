@@ -17,7 +17,7 @@ const BUILD_STEPS = [
   'Challenge path locked',
   'Mascot selected',
   'Card colours mixed',
-  '£0 progress card ready',
+  'Starting progress card ready',
 ];
 
 export default function CardGeneration() {
@@ -50,12 +50,12 @@ export default function CardGeneration() {
 
   return (
     <Screen style={styles.container} testID="onboarding-generation">
-      <OnboardingHeader step={8} total={10} />
+      <OnboardingHeader step={11} total={12} />
       <AppText variant="title" style={styles.title}>
         Building your card
       </AppText>
       <AppText variant="body" color={themedColors.muted} style={styles.sub}>
-        This is the personalised £0 card you get before the paywall. Once it exists, you can unlock the save loop.
+        Your plan is set. Plump is turning it into your first progress card.
       </AppText>
 
       <Animated.View style={[styles.previewWrap, { transform: [{ scale: pulse }] }]}>
@@ -87,7 +87,7 @@ export default function CardGeneration() {
       </View>
 
       <Button
-        label={ready ? 'Reveal my card' : 'Mixing the cute stuff...'}
+        label={ready ? 'Reveal my card' : 'Building your card...'}
         disabled={!ready}
         loading={!ready}
         testID="generation-reveal-button"

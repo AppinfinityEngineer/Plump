@@ -39,18 +39,18 @@ export default function MascotSetup() {
 
   const onContinue = () => {
     void setDraft({ mascotVariant: selected });
-    router.push('/onboarding/preview' as never);
+    router.push('/onboarding/reminder' as never);
   };
 
   return (
     <Screen style={styles.container} testID="onboarding-mascot">
-      <OnboardingHeader step={6} total={10} />
+      <OnboardingHeader step={7} total={12} />
 
       <AppText variant="title" style={styles.title}>
         Choose your Plump
       </AppText>
       <AppText variant="body" color={colors.muted} style={styles.sub}>
-        Pick the colour that feels like yours. This little one grows with every save.
+        Pick the colour that feels like yours. This little one gets happier as your progress grows.
       </AppText>
 
       <View style={[styles.featured, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
