@@ -15,7 +15,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "5"
+      "buildNumber": "6"
     },
     "android": {
       "package": "com.thoughtsnaplabs.plump",
@@ -24,7 +24,7 @@
         "backgroundColor": "#FBF4E9"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "bundler": "metro",
@@ -65,7 +65,7 @@
     "extra": {
       "appStoreSku": "PLUMP-IOS-001",
       "launchVersion": "1.0.0",
-      "launchBuildNumber": "5",
+      "launchBuildNumber": "6",
       "router": {},
       "eas": {
         "projectId": "56959484-8acd-4a80-bde3-a0dd0be71e92"

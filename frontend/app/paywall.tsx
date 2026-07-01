@@ -56,7 +56,23 @@ export default function Paywall() {
     track('paywall_variant_assigned', { variant: config.paywallVariant });
   }, [config.paywallVariant]);
 
-  const goPaid = () => router.replace('/(tabs)');
+  const goPaid = () => {
+    const nav = router as unknown as {
+      canDismiss?: () => boolean;
+      dismissAll?: () => void;
+      replace: typeof router.replace;
+    };
+
+    try {
+      if (nav.canDismiss?.()) nav.dismissAll?.();
+    } catch {
+      // If the native stack cannot dismiss, still replace below.
+    }
+
+    setTimeout(() => {
+      nav.replace('/(tabs)' as never);
+    }, 0);
+  };
 
   useEffect(() => {
     if (isPro) goPaid();
